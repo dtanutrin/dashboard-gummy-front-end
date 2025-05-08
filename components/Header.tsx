@@ -50,7 +50,7 @@ export default function Header() {
               <div className="relative">
                 <div className="flex items-center">
                   <div className="h-8 w-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center mr-2">
-                    {user.name.substring(0, 1).toUpperCase()}
+                    {user && user.name ? user.name.substring(0, 1).toUpperCase() : ""}
                   </div>
                   <button
                     className="text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400"

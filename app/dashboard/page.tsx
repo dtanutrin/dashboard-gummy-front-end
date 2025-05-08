@@ -62,7 +62,7 @@ export default function Dashboard() {
 
     if (user) {
       // Filtrar áreas que o usuário tem acesso
-      const filteredAreas = areas.filter((area) => user.role === "admin" || user.areas.includes(area.name))
+      const filteredAreas = areas.filter((area) => user.role === "admin" || (user.areas && Array.isArray(user.areas) && user.areas.includes(area.name)))
       setUserAreas(filteredAreas)
     }
   }, [user, loading, router])
