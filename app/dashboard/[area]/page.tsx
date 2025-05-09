@@ -3,7 +3,7 @@
 import { use } from 'react'
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useUser } from "../../../hooks/auth" // Removido useHasAccess
+import { useUser } from "../../../hooks/auth" //
 import Header from "../../../components/Header"
 import Link from "next/link"
 import { decodeUrlParam } from "../../../lib/utils"
