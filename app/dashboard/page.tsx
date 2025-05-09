@@ -2,23 +2,20 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useUser } from "../../hooks/auth" // Ajustado para o caminho no projeto target
-import Header from "../../components/Header" // Ajustado para o caminho no projeto target
-import AreaCard from "../../components/AreaCard" // Importando o novo AreaCard
+import { useUser } from "../../hooks/auth" 
+import Header from "../../components/Header" 
+import AreaCard from "../../components/AreaCard" 
 import Image from "next/image"
 
-// Interface para os dados de uma área
 interface Area {
   id: number | string;
   name: string;
-  slug: string; // Para URLs amigáveis e consistência na filtragem
+  slug: string; 
   color: string;
   icon: string;
   description: string;
 }
 
-// Dados das áreas. Idealmente, viriam do backend ou de uma configuração centralizada.
-// O campo 'slug' deve corresponder ao que é armazenado em user.areas se for usado para filtragem.
 const allAreasData: Area[] = [
   { id: 1, name: "Logística", slug: "logistica", color: "#e91e63", icon: "🚚", description: "Gestão de entregas e estoque" },
   { id: 2, name: "Marketing", slug: "marketing", color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" },
@@ -31,7 +28,7 @@ export default function DashboardPage() {
   const { user, loading } = useUser() 
   const router = useRouter()
   const [displayedAreas, setDisplayedAreas] = useState<Area[]>([])
-  const [debugUserInfo, setDebugUserInfo] = useState<string>(""); // Estado para info de debug
+  const [debugUserInfo, setDebugUserInfo] = useState<string>("");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -41,12 +38,13 @@ export default function DashboardPage() {
 
     if (user) {
       const userAllowedAreaSlugs = user.areas || []; 
+      // Corrigida a comparação do user.role para ser case-insensitive
+      const isAdmin = user.role && user.role.toLowerCase() === "admin";
       const filteredAreas = allAreasData.filter(area => 
-        user.role === "admin" || userAllowedAreaSlugs.includes(area.slug) || userAllowedAreaSlugs.includes(area.name)
+        isAdmin || userAllowedAreaSlugs.includes(area.slug) || userAllowedAreaSlugs.includes(area.name)
       );
       setDisplayedAreas(filteredAreas)
 
-      // Informação de debug
       if (filteredAreas.length === 0) {
         setDebugUserInfo(`Debug Info: User Role: ${user.role}, User Areas: ${JSON.stringify(user.areas)}`);
       } else {
@@ -90,8 +88,8 @@ export default function DashboardPage() {
         ) : (
           <div className="text-center py-10">
             <p className="text-xl text-gray-500 dark:text-gray-400">Nenhuma área disponível para você no momento.</p>
-            {user?.role !== 'admin' && <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Entre em contato com um administrador se você acredita que deveria ter acesso a alguma área.</p>}
-            {/* Exibir informações de debug se não houver áreas */} 
+            {/* Corrigida a verificação do user.role para ser case-insensitive também na mensagem de contato */} 
+            {user && user.role && user.role.toLowerCase() !== 'admin' && <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Entre em contato com um administrador se você acredita que deveria ter acesso a alguma área.</p>}
             {debugUserInfo && (
               <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-md">
                 <p className="text-sm text-red-500 dark:text-red-400 font-semibold">Informação de Debug:</p>
