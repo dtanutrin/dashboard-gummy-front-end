@@ -1,60 +1,149 @@
-import { getCookie } from "cookies-next";
+import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://dashboard-gummy-back-end.onrender.com/api";
-
-// Solução definitiva para os headers
-type CustomHeaders = Record<string, string> & {
-  "Content-Type": string;
-  Authorization?: string;
+// Tipos para a API
+type LoginResponse = {
+  token: string;
+  user: {
+    id: number;
+    email: string;
+    role: string;
+    name?: string;
+  };
 };
 
-async function request(endpoint: string, options: RequestInit = {}) {
-  const token = getCookie("token");
-  
-  // Criação dos headers com tipo seguro
-  const headers: CustomHeaders = {
+type Dashboard = {
+  id: number;
+  name: string;
+  // Adicione outros campos conforme retornado pelo backend
+};
+
+// Configuração base
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://dashboard-gummy-back-end.onrender.com/api";
+
+const apiClient = axios.create({
+  baseURL: API_URL,
+  headers: {
     "Content-Type": "application/json",
-    ...(options.headers as Record<string, string> | undefined),
-  };
+  },
+});
 
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  // Configuração final com headers tipados corretamente
-  const config: RequestInit = {
-    ...options,
-    headers: headers as HeadersInit, // Cast seguro para o tipo esperado pelo RequestInit
-  };
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: response.statusText }));
-      throw new Error(errorData.message || `Error: ${response.status}`);
+// Interceptor para adicionar token JWT
+apiClient.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
-    return response.status === 204 ? null : response.json();
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Interceptor para tratamento global de erros
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      // Tratamento especial para erros de autenticação
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("authToken");
+        window.location.href = "/auth/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * Função para login
+ * @param email - Email do usuário
+ * @param password - Senha do usuário
+ * @returns Promise com dados do usuário e token
+ */
+export const login = async (email: string, password: string): Promise<LoginResponse> => {
+  try {
+    const response = await apiClient.post<LoginResponse>("/auth/login", { email, password });
+    
+    if (typeof window !== "undefined" && response.data.token) {
+      localStorage.setItem("authToken", response.data.token);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+    }
+    
+    return response.data;
   } catch (error) {
-    console.error("Request failed:", error);
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || "Erro ao tentar fazer login";
+      console.error("Erro na API de login:", errorMessage);
+      throw new Error(errorMessage);
+    }
+    throw new Error("Erro desconhecido ao fazer login");
+  }
+};
+
+/**
+ * Função para logout
+ */
+export const logout = (): void => {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+  }
+};
+
+/**
+ * Obtém o usuário atual do localStorage
+ */
+export const getCurrentUser = (): LoginResponse['user'] | null => {
+  if (typeof window === "undefined") return null;
+  
+  const user = localStorage.getItem("user");
+  return user ? JSON.parse(user) : null;
+};
+
+/**
+ * Busca dashboards
+ * @returns Promise com lista de dashboards
+ */
+export const fetchDashboards = async (): Promise<Dashboard[]> => {
+  try {
+    const response = await apiClient.get<Dashboard[]>("/dashboards");
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao buscar dashboards:", error);
     throw error;
   }
-}
+};
 
-// Implementação prática (sem interfaces complexas)
-export const getUsers = () => request("/users");
-export const getUserById = (id: string) => request(`/users/${id}`);
-export const createUser = (data: unknown) => 
-  request("/users", { method: "POST", body: JSON.stringify(data) });
-export const updateUser = (id: string, data: unknown) => 
-  request(`/users/${id}`, { method: "PUT", body: JSON.stringify(data) });
-export const deleteUser = (id: string) => 
-  request(`/users/${id}`, { method: "DELETE" });
+/**
+ * Atualiza dados do usuário no servidor
+ */
+export const updateUserProfile = async (userData: Partial<LoginResponse['user']>) => {
+  try {
+    const response = await apiClient.patch<LoginResponse['user']>("/users/me", userData);
+    
+    if (typeof window !== "undefined") {
+      localStorage.setItem("user", JSON.stringify(response.data));
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao atualizar perfil:", error);
+    throw error;
+  }
+};
 
-export const getDashboards = () => request("/dashboards");
-export const getDashboardById = (id: string) => request(`/dashboards/${id}`);
-export const createDashboard = (data: unknown) => 
-  request("/dashboards", { method: "POST", body: JSON.stringify(data) });
-export const updateDashboard = (id: string, data: unknown) => 
-  request(`/dashboards/${id}`, { method: "PUT", body: JSON.stringify(data) });
-export const deleteDashboard = (id: string) => 
-  request(`/dashboards/${id}`, { method: "DELETE" });
+/**
+ * Verifica se o token é válido
+ */
+export const validateToken = async (): Promise<boolean> => {
+  try {
+    await apiClient.get("/auth/validate");
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+export default apiClient;
