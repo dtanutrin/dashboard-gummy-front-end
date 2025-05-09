@@ -8,8 +8,30 @@ import Header from "../../../components/Header"
 import Link from "next/link"
 import { decodeUrlParam } from "../../../lib/utils"
 
-// Dados simulados dos dashboards por área (totalmente preservado)
-const dashboardsByArea = {
+// Definindo tipos para maior clareza e segurança
+interface DashboardItem {
+  id: number;
+  name: string;
+  description: string;
+  embedUrl: string;
+  icon: string;
+  tags: string[];
+}
+
+interface DashboardsByArea {
+  [key: string]: DashboardItem[];
+}
+
+interface AreaColors {
+  [key: string]: string;
+}
+
+interface AreaIcons {
+  [key: string]: string;
+}
+
+// Dados simulados dos dashboards por área
+const dashboardsByArea: DashboardsByArea = {
   logística: [
     {
       id: 1,
@@ -110,8 +132,7 @@ const dashboardsByArea = {
   ],
 }
 
-// Cores por área (totalmente preservado)
-const areaColors = {
+const areaColors: AreaColors = {
   logística: "#e91e63",
   marketing: "#ff4081",
   operações: "#c2185b",
@@ -119,8 +140,7 @@ const areaColors = {
   comercial: "#f48fb1",
 }
 
-// Ícones por área (totalmente preservado)
-const areaIcons = {
+const areaIcons: AreaIcons = {
   logística: "🚚",
   marketing: "📊",
   operações: "⚙️",
@@ -128,8 +148,14 @@ const areaIcons = {
   comercial: "💼",
 }
 
-// Componente DashboardCard (totalmente preservado)
-const DashboardCard = ({ dashboard, areaColor, decodedArea, index }) => {
+interface DashboardCardProps {
+  dashboard: DashboardItem;
+  areaColor: string;
+  decodedArea: string;
+  index: number; // index não é usado no componente, mas mantido se necessário para outros fins
+}
+
+const DashboardCard = ({ dashboard, areaColor, decodedArea }: DashboardCardProps) => {
   return (
     <div className="opacity-100 transform translate-y-0 transition-all duration-300 delay-100">
       <div className="h-full overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 dark:bg-gray-800 dark:border-gray-700 rounded-lg bg-white">
@@ -194,19 +220,27 @@ const DashboardCard = ({ dashboard, areaColor, decodedArea, index }) => {
   )
 }
 
-// Componente principal com a correção do params
-export default function AreaDashboards({ params }: { params: Promise<{ area: string }> }) {
-  const { area } = use(params) // Única modificação necessária
-  const decodedArea = decodeUrlParam(area)
+interface AreaDashboardsProps {
+  params: { area: string };
+}
+
+export default function AreaDashboards({ params }: AreaDashboardsProps) {
+  // Removido o use(params) pois params já é síncrono aqui
+  const decodedArea = decodeUrlParam(params.area)
   const areaName = decodedArea.charAt(0).toUpperCase() + decodedArea.slice(1)
 
-  // Todo o resto do código permanece IDÊNTICO ao original
   const { user, loading } = useUser()
   const router = useRouter()
-  const hasAccess = useHasAccess(areaName)
-  const [dashboards, setDashboards] = useState<any[]>([])
-  const areaColor = areaColors[decodedArea.toLowerCase()] || "#e91e63"
-  const areaIcon = areaIcons[decodedArea.toLowerCase()] || "📊"
+  // A área para useHasAccess deve ser a 'areaName' capitalizada, como 'Logística', 'Marketing', etc.
+  // Se as permissões no backend/usuário estiverem como 'logistica', 'marketing', então use 'decodedArea'
+  const hasAccess = useHasAccess(areaName) // Ou useHasAccess(decodedArea) dependendo da configuração de permissões
+  
+  const [dashboards, setDashboards] = useState<DashboardItem[]>([])
+  
+  // Garantir que a chave exista antes de acessar ou fornecer um fallback
+  const lowerDecodedArea = decodedArea.toLowerCase();
+  const areaColor = areaColors[lowerDecodedArea] || "#e91e63" 
+  const areaIcon = areaIcons[lowerDecodedArea] || "📊"
 
   useEffect(() => {
     if (!loading) {
@@ -216,14 +250,15 @@ export default function AreaDashboards({ params }: { params: Promise<{ area: str
       }
 
       if (!hasAccess) {
-        router.push("/dashboard")
+        // Considerar redirecionar para uma página de não autorizado ou mostrar mensagem
+        router.push("/dashboard") 
         return
       }
-
-      const areaDashboards = dashboardsByArea[decodedArea.toLowerCase()] || []
+      // Garantir que a chave exista antes de acessar ou fornecer um fallback
+      const areaDashboards = dashboardsByArea[lowerDecodedArea] || []
       setDashboards(areaDashboards)
     }
-  }, [user, loading, hasAccess, decodedArea, router])
+  }, [user, loading, hasAccess, lowerDecodedArea, router]) // Adicionado lowerDecodedArea às dependências
 
   if (loading) {
     return (
@@ -233,8 +268,15 @@ export default function AreaDashboards({ params }: { params: Promise<{ area: str
     )
   }
 
-  if (!hasAccess) {
-    return null
+  if (!user || !hasAccess) {
+    // Se o usuário não estiver logado ou não tiver acesso, não renderiza nada ou mostra mensagem de acesso negado.
+    // O redirecionamento já é tratado no useEffect.
+    // Pode ser útil ter uma tela de "Acesso Negado" aqui em vez de retornar null.
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-pink-100 dark:from-gray-900 dark:to-gray-800">
+        <p className="text-xl text-gray-700 dark:text-gray-300">Verificando acesso...</p>
+      </div>
+    ); 
   }
 
   return (
@@ -265,7 +307,7 @@ export default function AreaDashboards({ params }: { params: Promise<{ area: str
           <div className="flex items-center">
             <div
               className="flex items-center justify-center h-12 w-12 rounded-full mr-4 text-2xl"
-              style={{ backgroundColor: `${areaColor}20` }}
+              style={{ backgroundColor: `${areaColor}20` }} // Adicionado sufixo para transparência se desejado, ou manter como está
             >
               {areaIcon}
             </div>
@@ -280,13 +322,19 @@ export default function AreaDashboards({ params }: { params: Promise<{ area: str
           </div>
         </div>
 
+        {dashboards.length === 0 && !loading && (
+          <div className="text-center py-10">
+            <p className="text-xl text-gray-700 dark:text-gray-300">Nenhum dashboard encontrado para esta área ou você não tem acesso.</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {dashboards.map((dashboard, index) => (
             <DashboardCard
               key={dashboard.id}
               dashboard={dashboard}
               areaColor={areaColor}
-              decodedArea={decodedArea}
+              decodedArea={decodedArea} // decodedArea é string
               index={index}
             />
           ))}

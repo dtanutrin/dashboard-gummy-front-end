@@ -2,81 +2,65 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useUser } from "../../hooks/auth"
-import Header from "../../components/Header"
-import Link from "next/link"
+import { useUser } from "../../hooks/auth" // Ajustado para o caminho no projeto target
+import Header from "../../components/Header" // Ajustado para o caminho no projeto target
+import AreaCard from "../../components/AreaCard" // Importando o novo AreaCard
 import Image from "next/image"
 
-// Dados simulados das áreas com cores atualizadas para rosa
-const areas = [
-  { id: 1, name: "Logística", color: "#e91e63", icon: "🚚", description: "Gestão de entregas e estoque" },
-  { id: 2, name: "Marketing", color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" },
-  { id: 3, name: "Operações", color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" },
-  { id: 4, name: "CS", color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" },
-  { id: 5, name: "Comercial", color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
-]
-
-// Componente de cartão de área com animação
-const AreaCard = ({ area , index }) => {
-  const areaClass = `area-card-${area.name.toLowerCase()}`
-
-  return (
-    <div className="opacity-100 transform translate-y-0 transition-all duration-300 delay-100">
-      <Link href={`/dashboard/${area.name.toLowerCase()}`} className="block">
-        <div
-          className={`h-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${areaClass} rounded-lg`}
-          style={{
-            backgroundColor: area.color,
-            borderRadius: "12px",
-            border: "none",
-          }}
-        >
-          <div className="p-6 flex flex-col items-center text-center">
-            <div className="text-5xl mb-4 mt-4">{area.icon}</div>
-            <h2 className="text-2xl font-bold mb-2">{area.name}</h2>
-            <p className="opacity-80 text-sm">{area.description}</p>
-            <div className="mt-4 w-1/3 h-1 bg-white bg-opacity-30 rounded-full"></div>
-            <button
-              className="mt-6 px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-sm font-medium transition-all duration-200"
-              style={{ backdropFilter: "blur(4px)" }}
-            >
-              Acessar Dashboard
-            </button>
-          </div>
-        </div>
-      </Link>
-    </div>
-  )
+// Interface para os dados de uma área
+interface Area {
+  id: number | string;
+  name: string;
+  slug: string; // Para URLs amigáveis e consistência na filtragem
+  color: string;
+  icon: string;
+  description: string;
 }
 
-export default function Dashboard() {
-  const { user, loading } = useUser()
+// Dados das áreas. Idealmente, viriam do backend ou de uma configuração centralizada.
+// O campo 'slug' deve corresponder ao que é armazenado em user.areas se for usado para filtragem.
+const allAreasData: Area[] = [
+  { id: 1, name: "Logística", slug: "logistica", color: "#e91e63", icon: "🚚", description: "Gestão de entregas e estoque" },
+  { id: 2, name: "Marketing", slug: "marketing", color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" },
+  { id: 3, name: "Operações", slug: "operacoes", color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" },
+  { id: 4, name: "CS", slug: "cs", color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" },
+  { id: 5, name: "Comercial", slug: "comercial", color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
+]
+
+export default function DashboardPage() {
+  const { user, loading } = useUser() // Removido isAuthenticated da desestruturação
   const router = useRouter()
-  const [userAreas, setUserAreas] = useState<any[]>([])
+  const [displayedAreas, setDisplayedAreas] = useState<Area[]>([])
 
   useEffect(() => {
+    // Se não estiver carregando e não houver usuário, redireciona para o login
     if (!loading && !user) {
       router.push("/auth/login")
       return
     }
 
+    // Se houver usuário (implica que está autenticado)
     if (user) {
-      // Filtrar áreas que o usuário tem acesso
-      const filteredAreas = areas.filter((area) => user.role === "admin" || (user.areas && Array.isArray(user.areas) && user.areas.includes(area.name)))
-      setUserAreas(filteredAreas)
+      const userAllowedAreaSlugs = user.areas || []; 
+      const filteredAreas = allAreasData.filter(area => 
+        user.role === "admin" || userAllowedAreaSlugs.includes(area.slug) || userAllowedAreaSlugs.includes(area.name)
+      );
+      setDisplayedAreas(filteredAreas)
     }
   }, [user, loading, router])
 
-  if (loading) {
+  // Mostrar tela de carregamento enquanto 'loading' for true ou se, após o carregamento, não houver usuário (indicando falha na autenticação ou usuário não logado)
+  if (loading || (!loading && !user)) { 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-pink-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="loading-spinner"></div>
+        <p>Carregando...</p>
       </div>
     )
   }
 
+  // Se chegou aqui, significa que loading é false e user existe
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-pink-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-pink-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-white">
       <Header />
       <main className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
@@ -90,11 +74,18 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {userAreas.map((area, index) => (
-            <AreaCard key={area.id} area={area} index={index} />
-          ))}
-        </div>
+        {displayedAreas.length > 0 ? (
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {displayedAreas.map((area, index) => (
+              <AreaCard key={area.id} area={area} index={index} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-10">
+            <p className="text-xl text-gray-500 dark:text-gray-400">Nenhuma área disponível para você no momento.</p>
+            {user?.role !== 'admin' && <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Entre em contato com um administrador se você acredita que deveria ter acesso a alguma área.</p>}
+          </div>
+        )}
       </main>
 
       <footer className="mt-16 py-8 bg-white bg-opacity-50 dark:bg-gray-800 dark:bg-opacity-50 border-t border-gray-200 dark:border-gray-700">
