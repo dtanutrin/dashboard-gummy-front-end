@@ -28,28 +28,36 @@ const allAreasData: Area[] = [
 ]
 
 export default function DashboardPage() {
-  const { user, loading } = useUser() // Removido isAuthenticated da desestruturação
+  const { user, loading } = useUser() 
   const router = useRouter()
   const [displayedAreas, setDisplayedAreas] = useState<Area[]>([])
+  const [debugUserInfo, setDebugUserInfo] = useState<string>(""); // Estado para info de debug
 
   useEffect(() => {
-    // Se não estiver carregando e não houver usuário, redireciona para o login
     if (!loading && !user) {
       router.push("/auth/login")
       return
     }
 
-    // Se houver usuário (implica que está autenticado)
     if (user) {
       const userAllowedAreaSlugs = user.areas || []; 
       const filteredAreas = allAreasData.filter(area => 
         user.role === "admin" || userAllowedAreaSlugs.includes(area.slug) || userAllowedAreaSlugs.includes(area.name)
       );
       setDisplayedAreas(filteredAreas)
+
+      // Informação de debug
+      if (filteredAreas.length === 0) {
+        setDebugUserInfo(`Debug Info: User Role: ${user.role}, User Areas: ${JSON.stringify(user.areas)}`);
+      } else {
+        setDebugUserInfo("");
+      }
+    } else if (!loading && !user) {
+        setDebugUserInfo("Debug Info: Usuário não encontrado após carregamento.");
     }
+
   }, [user, loading, router])
 
-  // Mostrar tela de carregamento enquanto 'loading' for true ou se, após o carregamento, não houver usuário (indicando falha na autenticação ou usuário não logado)
   if (loading || (!loading && !user)) { 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-pink-100 dark:from-gray-900 dark:to-gray-800">
@@ -58,7 +66,6 @@ export default function DashboardPage() {
     )
   }
 
-  // Se chegou aqui, significa que loading é false e user existe
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-pink-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-white">
       <Header />
@@ -84,6 +91,13 @@ export default function DashboardPage() {
           <div className="text-center py-10">
             <p className="text-xl text-gray-500 dark:text-gray-400">Nenhuma área disponível para você no momento.</p>
             {user?.role !== 'admin' && <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Entre em contato com um administrador se você acredita que deveria ter acesso a alguma área.</p>}
+            {/* Exibir informações de debug se não houver áreas */} 
+            {debugUserInfo && (
+              <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-md">
+                <p className="text-sm text-red-500 dark:text-red-400 font-semibold">Informação de Debug:</p>
+                <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{debugUserInfo}</pre>
+              </div>
+            )}
           </div>
         )}
       </main>
