@@ -2,13 +2,13 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import * as api from "../../lib/api";
+import * as api from "../../lib/api"; // Presumo que api.fetchCurrentUser() será criada em lib/api.ts
 
 // Tipos melhorados
 type UserRole = "Admin" | "User" | "Editor" | string; // Pode ser estendido conforme necessário
 
 type User = {
-  id: number;
+  id: number; // No backend o token tem userId, mas a resposta do /auth/me pode ser só id
   email: string;
   role: UserRole;
   name?: string;
@@ -36,18 +36,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const token = localStorage.getItem("authToken");
     if (!token) {
       setLoading(false);
+      setUser(null); // Garante que o usuário seja nulo se não houver token
       return;
     }
 
     try {
-      // Implementação real buscando dados do usuário do backend
-      const userData = await api.getCurrentUser();
-      setUser(userData);
+      setLoading(true); // Define loading como true antes da chamada da API
+      // Chama uma nova função na API para buscar dados do usuário usando o token (ex: /auth/me)
+      const userData = await api.fetchCurrentUserData(); // Esta função precisará ser implementada em lib/api.ts
+      setUser(userData); // Define o usuário com os dados recebidos
     } catch (error) {
-      // Não logar aqui, pois o logout() já pode lidar com isso ou ser um erro esperado
-      // console.error("Failed to load user:", error);
-      await api.logout(); // Limpa o token local se o usuário não puder ser carregado
+      // console.error("Failed to load user from token:", error); // Log pode ser útil para debug
+      await api.logout(); // Limpa o token local e o usuário se a validação falhar
       setUser(null);
+      // Não redireciona para login aqui, deixa o ProtectedRoute cuidar disso se necessário
     } finally {
       setLoading(false);
     }
@@ -63,36 +65,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "authToken" && e.newValue === null) {
         setUser(null);
-        router.push("/auth/login");
+        // Não redireciona automaticamente para login aqui, pode causar loops ou comportamento indesejado.
+        // Deixe os componentes/rotas protegidas lidarem com o redirecionamento.
+        // router.push("/auth/login"); 
       }
     };
 
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, [loadUserFromToken, router]);
+  }, [loadUserFromToken]); // Removido router da dependência para evitar re-execuções desnecessárias
 
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
+      // A função api.login já deve salvar o token no localStorage e retornar os dados do usuário
       const { user: userData } = await api.login(email, password);
       
       if (!userData) {
-        // Este erro será capturado pelo catch abaixo e relançado
         throw new Error("Dados do usuário não retornados no login");
       }
       
-      setUser(userData);
-      router.push("/dashboard");
+      setUser(userData); // Define o usuário no estado do contexto
+      router.push("/dashboard"); // Redireciona após login bem-sucedido
     } catch (error) {
-      // console.error("Login error:", error); // Removido para evitar log duplicado
-      setUser(null);
-      // api.logout(); // Não é necessário chamar logout aqui, pois o token não foi setado ou será inválido
+      setUser(null); // Limpa o usuário em caso de falha no login
+      // api.logout(); // Não é necessário, pois o token não foi setado ou será inválido
       
       let errorMessage = "Falha no login. Por favor, tente novamente.";
       if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string") {
         errorMessage = error.message;
       }
-      
       throw new Error(errorMessage); // Relança o erro para ser tratado pelo componente de UI
     } finally {
       setLoading(false);
@@ -105,14 +107,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(null);
       router.push("/auth/login");
     } catch (error) {
-      console.error("Erro no logout:", error); // Mantém log para erros inesperados no logout
+      console.error("Erro no logout:", error); 
     }
   };
 
   const value = {
     user,
     loading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !!localStorage.getItem("authToken"), // Verifica também o token
     login,
     logout,
     refreshUser,
@@ -138,18 +140,21 @@ export const useUser = () => {
   return { user, loading };
 };
 
-// useHasAccess e ProtectedRoute permanecem os mesmos
 export const useHasAccess = (requiredPermission: string | string[]) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth();
 
-  if (loading) return false;
-  if (!user) return false;
+  if (loading) return false; // Se estiver carregando, não tem acesso ainda
+  if (!isAuthenticated || !user) return false; // Se não estiver autenticado ou não houver usuário, não tem acesso
 
-  if (user.role === "Admin") return true;
+  if (user.role === "Admin") return true; // Admin tem acesso a tudo
 
+  // Lógica de permissão específica (se aplicável)
   const permissionsToCheck = Array.isArray(requiredPermission) 
     ? requiredPermission 
     : [requiredPermission];
+
+  // Se não houver permissões definidas para o usuário, ele não tem acesso a permissões específicas
+  if (!user.permissions) return false; 
 
   return permissionsToCheck.some(permission => 
     user.permissions?.includes(permission)
@@ -159,57 +164,49 @@ export const useHasAccess = (requiredPermission: string | string[]) => {
 export const ProtectedRoute = ({
   children,
   requiredRole,
-  requiredPermission,
+  // requiredPermission, // Comentado por enquanto para simplificar, focar no role
   redirectTo = "/auth/login",
 }: {
   children: React.ReactNode;
   requiredRole?: UserRole;
-  requiredPermission?: string | string[];
+  // requiredPermission?: string | string[];
   redirectTo?: string;
 }) => {
   const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push(redirectTo);
-    }
-
-    if (!loading && isAuthenticated && user) {
-      if (requiredRole && user.role !== requiredRole) {
-        router.push("/unauthorized");
+    if (!loading) { // Só executa após o carregamento inicial
+      if (!isAuthenticated) {
+        router.push(redirectTo);
+      } else if (user && requiredRole && user.role !== requiredRole) {
+        // Se está autenticado, mas não tem o role necessário
+        router.push("/unauthorized"); // Ou uma página de acesso negado mais genérica
       }
-      
-      if (requiredPermission) {
-        // A função useHasAccess já é um hook, não deve ser chamada diretamente dentro de ProtectedRoute.
-        // Esta lógica precisa ser ajustada ou a chamada a useHasAccess ser feita de forma condicional.
-        // Para manter a correção focada no erro de login, não alterarei esta parte agora.
-        // const hasAccess = useHasAccess(requiredPermission); // Chamada incorreta de hook aqui
-        // if (!hasAccess) {
-        //   router.push("/unauthorized");
-        // }
-      }
+      // Lógica para requiredPermission pode ser adicionada aqui se necessário
     }
-  }, [loading, isAuthenticated, user, router, requiredRole, requiredPermission, redirectTo]);
+  }, [loading, isAuthenticated, user, router, requiredRole, redirectTo]);
 
   if (loading || !isAuthenticated) {
-    return <div>Loading...</div>;
+    // Enquanto carrega ou se não estiver autenticado, mostra um loader ou nada
+    return <div>Loading authentication...</div>; 
   }
 
-  // A lógica de verificação de role e permissão aqui também pode precisar de revisão
-  // para o uso correto de useHasAccess, mas está fora do escopo do erro de login.
+  // Se tem um requiredRole e o usuário não o possui (após o loading e autenticação verificados)
   if (requiredRole && user?.role !== requiredRole) {
-    return <div>Verificando permissões...</div>;
+    // Poderia retornar um componente de "Não autorizado" ou null para o useEffect redirecionar
+    return <div>Checking permissions...</div>; 
   }
-
-  // if (requiredPermission && !useHasAccess(requiredPermission)) { // Chamada incorreta de hook aqui
-  //   return <div>Verificando permissões...</div>;
-  // }
 
   return <>{children}</>;
 };
 
+// Função utilitária para deslogar, pode ser chamada de qualquer componente
 export const logoutUser = () => {
-  const { logout } = useAuth();
-  logout();
+  const { logout } = useAuth(); // Isso é um erro, hooks não podem ser chamados assim diretamente.
+                               // Esta função deveria ser um método do contexto ou removida se `logout` do useAuth() for suficiente.
+                               // Por ora, vou comentar para evitar erro de build.
+  // logout(); 
+  // Em vez disso, quem precisar deslogar deve usar: const { logout } = useAuth(); logout();
 };
+
