@@ -2,8 +2,10 @@
 
 import { useEffect, useState, type ReactNode, type ComponentPropsWithoutRef, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/hooks/auth'; // Ajuste o caminho se necessário 
-import { toast, Toaster } from 'react-hot-toast'   // Para notificações
+// import { useUser } from '@/hooks/auth'; // Mantido o comentário original, mas vamos usar o useAuth que já ajustamos
+import { useAuth } from "../../app/auth/hooks"; // Caminho ajustado para o AuthProvider que já corrigimos
+import apiClient from '../../lib/api'; // Importa o apiClient configurado que já corrigimos
+import { toast, Toaster } from 'react-hot-toast';
 
 // Tipos para os dados
 interface Area {
@@ -16,10 +18,10 @@ interface Dashboard {
   name: string;
   url: string;
   areaId: number;
-  areaName?: string;
+  areaName?: string; // Campo opcional para nome da área, se populado
 }
 
-// Definindo tipos para os componentes de UI
+// Definindo tipos para os componentes de UI (restaurados do original)
 interface ButtonProps extends ComponentPropsWithoutRef<'button'> {
   children: ReactNode;
 }
@@ -39,7 +41,7 @@ interface TdProps extends ComponentPropsWithoutRef<'td'> {
   children: ReactNode;
 }
 
-// Componentes de UI (exemplo, podem ser substituídos por componentes de UI library como ShadCN)
+// Componentes de UI (restaurados do original)
 const Button = ({ children, ...props }: ButtonProps) => <button {...props} className={`px-4 py-2 bg-pink-600 text-white rounded hover:bg-pink-700 disabled:opacity-50 ${props.className || ''}`}>{children}</button>;
 const Input = (props: InputProps) => <input {...props} className={`border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white ${props.className || ''}`} />;
 const Select = (props: SelectProps) => <select {...props} className={`border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white ${props.className || ''}`} />;
@@ -48,10 +50,10 @@ const Th = ({ children, ...props }: ThProps) => <th {...props} className={`py-3 
 const Td = ({ children, ...props }: TdProps) => <td {...props} className={`py-3 px-4 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-200 ${props.className || ''}`}>{children}</td>;
 
 export default function AdminPage() {
-  const { user, loading: userLoading, token } = useUser();
+  const { user, loading: userLoading, isAuthenticated } = useAuth(); // Usando useAuth que já ajustamos
   const router = useRouter();
 
-  console.log("[AdminPage] Render - User:", user, "UserLoading:", userLoading, "Token:", token);
+  console.log("[AdminPage] Render - User:", user, "UserLoading:", userLoading, "IsAuthenticated:", isAuthenticated);
 
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
@@ -65,87 +67,62 @@ export default function AdminPage() {
   const [selectedAreaId, setSelectedAreaId] = useState<string>('');
 
   useEffect(() => {
-    console.log("[AdminPage] useEffect [user, userLoading, router] - UserLoading:", userLoading, "User:", user);
-    if (!userLoading && (!user || user.role?.toLowerCase() !== 'admin')) {
-      console.log("[AdminPage] Acesso negado ou usuário não é admin. Redirecionando...");
-      toast.error('Acesso negado. Você precisa ser administrador.');
-      router.push('/dashboard');
+    console.log("[AdminPage] AuthCheckEffect - UserLoading:", userLoading, "IsAuthenticated:", isAuthenticated, "User:", user);
+    if (!userLoading) {
+      if (!isAuthenticated || !user || user.role?.toLowerCase() !== 'admin') {
+        console.log("[AdminPage] AuthCheckEffect - Acesso negado ou usuário não é admin. Redirecionando...");
+        toast.error('Acesso negado. Você precisa ser administrador para acessar esta página.');
+        router.push('/dashboard'); // Ou para uma página de login/não autorizado
+      }
     }
-  }, [user, userLoading, router]);
+  }, [user, userLoading, isAuthenticated, router]);
 
-  const fetchDashboards = async () => {
-    console.log("[AdminPage] fetchDashboards - Token:", token);
-    if (!token) {
-      console.log("[AdminPage] fetchDashboards - Token ausente, abortando.");
-      return;
-    }
+  const fetchDashboardsData = async () => {
+    console.log("[AdminPage] fetchDashboardsData - Chamando...");
     setIsLoadingDashboards(true);
     try {
-      console.log("[AdminPage] fetchDashboards - Tentando buscar /api/dashboards");
-      const res = await fetch('/api/dashboards', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      console.log("[AdminPage] fetchDashboards - Resposta de /api/dashboards:", res.status);
-      if (!res.ok) throw new Error('Falha ao buscar dashboards');
-      const data = await res.json();
-      console.log("[AdminPage] fetchDashboards - Dados recebidos:", data);
-      setDashboards(data);
-    } catch (error) {
-      console.error("[AdminPage] fetchDashboards - Erro:", error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao buscar dashboards.');
+      const response = await apiClient.get<Dashboard[]>('/dashboards');
+      console.log("[AdminPage] fetchDashboardsData - Resposta de /dashboards:", response.status);
+      setDashboards(response.data);
+    } catch (error: any) {
+      console.error("[AdminPage] fetchDashboardsData - Erro:", error);
+      toast.error(error.response?.data?.message || error.message || 'Erro ao buscar dashboards.');
     }
     setIsLoadingDashboards(false);
   };
 
-  const fetchAreas = async () => {
-    console.log("[AdminPage] fetchAreas - Token:", token);
-    if (!token) {
-      console.log("[AdminPage] fetchAreas - Token ausente, abortando.");
-      setIsLoadingAreas(false); // Garante que o loading pare se não houver token
-      return;
-    }
+  const fetchAreasData = async () => {
+    console.log("[AdminPage] fetchAreasData - Chamando...");
     setIsLoadingAreas(true);
     try {
-      console.log("[AdminPage] fetchAreas - Tentando buscar /api/areas");
-      const res = await fetch('/api/areas', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      console.log("[AdminPage] fetchAreas - Resposta de /api/areas:", res.status);
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error("[AdminPage] fetchAreas - Erro na resposta:", res.status, errorText);
-        throw new Error(`Falha ao buscar áreas (status: ${res.status})`);
+      const response = await apiClient.get<Area[]>('/areas');
+      console.log("[AdminPage] fetchAreasData - Resposta de /areas:", response.status);
+      setAreas(response.data);
+      if (response.data.length > 0 && !selectedAreaId) {
+        setSelectedAreaId(response.data[0].id.toString());
       }
-      const data = await res.json();
-      console.log("[AdminPage] fetchAreas - Dados recebidos:", data);
-      setAreas(data);
-      if (data.length > 0 && !selectedAreaId) setSelectedAreaId(data[0].id.toString());
-    } catch (error) {
-      console.error("[AdminPage] fetchAreas - Erro:", error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao buscar áreas.');
+    } catch (error: any) {
+      console.error("[AdminPage] fetchAreasData - Erro:", error);
+      toast.error(error.response?.data?.message || error.message || 'Erro ao buscar áreas.');
     }
     setIsLoadingAreas(false);
   };
 
   useEffect(() => {
-    console.log("[AdminPage] useEffect [user, token] - User:", user, "Token:", token);
-    if (user && user.role?.toLowerCase() === 'admin' && token) { // Adicionada verificação explícita do token aqui
-      console.log("[AdminPage] Usuário é admin e token existe. Chamando fetchDashboards e fetchAreas.");
-      fetchDashboards();
-      fetchAreas();
-    } else {
-      console.log("[AdminPage] Usuário não é admin ou token ausente. Não chamando fetches.");
-       if (user && user.role?.toLowerCase() === 'admin' && !token) {
-         console.warn("[AdminPage] Usuário é admin, mas o token está ausente no momento de chamar os fetches.");
-       }
+    console.log("[AdminPage] DataFetchEffect - UserLoading:", userLoading, "IsAuthenticated:", isAuthenticated, "User Role:", user?.role);
+    if (!userLoading && isAuthenticated && user && user.role?.toLowerCase() === 'admin') {
+      console.log("[AdminPage] DataFetchEffect - Usuário é admin autenticado. Chamando fetches.");
+      fetchDashboardsData();
+      fetchAreasData();
+    } else if (!userLoading) {
+      console.log("[AdminPage] DataFetchEffect - Condições para fetch não atendidas (UserLoading:", userLoading, "IsAuthenticated:", isAuthenticated, "User Role:", user?.role, ")");
     }
-  }, [user, token]); // Dependência no token é crucial aqui
+  }, [user, userLoading, isAuthenticated]);
 
   const handleFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    console.log("[AdminPage] handleFormSubmit - Token:", token);
-    if (!dashboardName || !dashboardUrl || !selectedAreaId || !token) {
-      toast.error('Por favor, preencha todos os campos e garanta que está autenticado.');
+    if (!dashboardName || !dashboardUrl || !selectedAreaId) {
+      toast.error('Por favor, preencha todos os campos.');
       return;
     }
 
@@ -155,32 +132,25 @@ export default function AdminPage() {
       areaId: parseInt(selectedAreaId)
     };
 
-    const endpoint = editingDashboard ? `/api/dashboards/${editingDashboard.id}` : '/api/dashboards';
-    const method = editingDashboard ? 'PUT' : 'POST';
-    console.log(`[AdminPage] handleFormSubmit - Enviando ${method} para ${endpoint}`);
+    const endpoint = editingDashboard ? `/dashboards/${editingDashboard.id}` : '/dashboards';
+    const method = editingDashboard ? 'put' : 'post';
+    console.log(`[AdminPage] handleFormSubmit - Enviando ${method.toUpperCase()} para ${endpoint}`);
 
     try {
-      const res = await fetch(endpoint, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-      console.log("[AdminPage] handleFormSubmit - Resposta do servidor:", res.status);
-      if (!res.ok) {
-        const errorData = await res.json();
-        console.error("[AdminPage] handleFormSubmit - Erro ao salvar:", errorData);
-        throw new Error(errorData.message || `Falha ao ${editingDashboard ? 'atualizar' : 'adicionar'} dashboard`);
+      let response;
+      if (editingDashboard) {
+        response = await apiClient.put<Dashboard>(endpoint, payload);
+      } else {
+        response = await apiClient.post<Dashboard>(endpoint, payload);
       }
+      console.log("[AdminPage] handleFormSubmit - Resposta do servidor:", response.status);
       toast.success(`Dashboard ${editingDashboard ? 'atualizado' : 'adicionado'} com sucesso!`);
       setShowForm(false);
       setEditingDashboard(null);
-      fetchDashboards(); // Refresh a lista
-    } catch (error) {
+      fetchDashboardsData();
+    } catch (error: any) {
       console.error("[AdminPage] handleFormSubmit - Erro:", error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao salvar dashboard.');
+      toast.error(error.response?.data?.message || error.message || 'Erro ao salvar dashboard.');
     }
   };
 
@@ -193,27 +163,17 @@ export default function AdminPage() {
   };
 
   const handleDelete = async (dashboardId: number) => {
-    console.log("[AdminPage] handleDelete - Token:", token);
-    if (!token) return;
     if (!confirm('Tem certeza que deseja excluir este dashboard?')) return;
     console.log(`[AdminPage] handleDelete - Tentando excluir dashboard ID: ${dashboardId}`);
 
     try {
-      const res = await fetch(`/api/dashboards/${dashboardId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      console.log("[AdminPage] handleDelete - Resposta do servidor:", res.status);
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        console.error("[AdminPage] handleDelete - Erro ao excluir:", errorData);
-        throw new Error(errorData.message || 'Falha ao excluir dashboard');
-      }
+      const response = await apiClient.delete(`/dashboards/${dashboardId}`);
+      console.log("[AdminPage] handleDelete - Resposta do servidor:", response.status);
       toast.success('Dashboard excluído com sucesso!');
-      fetchDashboards(); // Refresh a lista
-    } catch (error) {
+      fetchDashboardsData();
+    } catch (error: any) {
       console.error("[AdminPage] handleDelete - Erro:", error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao excluir dashboard.');
+      toast.error(error.response?.data?.message || error.message || 'Erro ao excluir dashboard.');
     }
   };
 
@@ -229,10 +189,10 @@ export default function AdminPage() {
     console.log("[AdminPage] Render - Usuário carregando...");
     return <div className="p-8 text-center dark:text-white">Carregando informações do usuário...</div>;
   }
-  // Esta verificação já acontece no useEffect, mas uma dupla checagem aqui pode ser útil
-  if (!user || user.role?.toLowerCase() !== 'admin') {
+  
+  if (!isAuthenticated || !user || user.role?.toLowerCase() !== 'admin') {
      console.log("[AdminPage] Render - Acesso negado ou usuário não é admin (após userLoading ser false).");
-     return <div className="p-8 text-center dark:text-white">Acesso negado. Você será redirecionado.</div>;
+     return <div className="p-8 text-center dark:text-white">Verificando permissões... Você será redirecionado se não for admin.</div>;
   }
 
   console.log("[AdminPage] Render - Pronto para renderizar conteúdo da página admin.");
@@ -260,7 +220,7 @@ export default function AdminPage() {
             </div>
             <div className="mb-4">
               <label htmlFor="selectedAreaId" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Área</label>
-              {isLoadingAreas ? <p className="dark:text-gray-300">Carregando áreas...</p> : areas.length === 0 ? <p className="dark:text-gray-300">Nenhuma área encontrada.</p> : (
+              {isLoadingAreas ? <p className="dark:text-gray-300">Carregando áreas...</p> : areas.length === 0 ? <p className="dark:text-gray-300">Nenhuma área encontrada. Cadastre áreas primeiro.</p> : (
                 <Select id="selectedAreaId" value={selectedAreaId} onChange={(e) => setSelectedAreaId(e.target.value)} required>
                   {areas.map(area => <option key={area.id} value={area.id}>{area.name}</option>)}
                 </Select>
@@ -290,7 +250,7 @@ export default function AdminPage() {
                   <tr key={dash.id}>
                     <Td>{dash.id}</Td>
                     <Td>{dash.name}</Td>
-                    <Td>{areas.find(a => a.id === dash.areaId)?.name || 'N/A'}</Td> {/* Ajustado para buscar nome da área */} 
+                    <Td>{areas.find(a => a.id === dash.areaId)?.name || 'N/A'}</Td>
                     <Td><a href={dash.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{dash.url.substring(0,50)}...</a></Td>
                     <Td>
                       <Button onClick={() => handleEdit(dash)} className="mr-2 text-sm py-1 px-2 bg-blue-500 hover:bg-blue-600">Editar</Button>
@@ -303,6 +263,7 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+      {/* Adicionar aqui o CRUD de Usuários e Áreas se necessário */}
     </div>
   );
 }
