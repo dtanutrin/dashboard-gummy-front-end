@@ -2,11 +2,11 @@ import axios from "axios";
 
 // Tipos para a API
 type UserData = {
-  id: number;      // ou userId, dependendo do que /auth/me retorna
+  id: number;
   email: string;
   role: string;
   name?: string;
-  // Outros campos que /auth/me possa retornar
+  areas?: Area[]; // Adicionado para carregar áreas do usuário
 };
 
 type LoginResponse = {
@@ -14,11 +14,22 @@ type LoginResponse = {
   user: UserData;
 };
 
-type Dashboard = {
+export interface Area {
   id: number;
   name: string;
-  // Adicione outros campos conforme retornado pelo backend
-};
+  // Frontend pode adicionar color/icon aqui se necessário para exibição
+  color?: string; 
+  icon?: string;
+  dashboards?: Dashboard[]; // Para carregar dashboards dentro de uma área
+}
+
+export interface Dashboard {
+  id: number;
+  name: string;
+  url: string;
+  areaId: number;
+  // description?: string; // Se o backend enviar, adicione aqui
+}
 
 // Configuração base
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://dashboard-gummy-back-end.onrender.com/api";
@@ -49,47 +60,32 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
-      // Tratamento especial para erros de autenticação
       if (typeof window !== "undefined") {
         localStorage.removeItem("authToken");
-        localStorage.removeItem("user"); // Limpa também o usuário
-        // window.location.href = "/auth/login"; // Comentado para evitar redirecionamento abrupto, deixar o AuthProvider/ProtectedRoute lidar
+        localStorage.removeItem("user");
       }
     }
     return Promise.reject(error);
   }
 );
 
-/**
- * Função para login
- * @param email - Email do usuário
- * @param password - Senha do usuário
- * @returns Promise com dados do usuário e token
- */
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
   try {
     const response = await apiClient.post<LoginResponse>("/auth/login", { email, password });
-    
     if (typeof window !== "undefined" && response.data.token) {
       localStorage.setItem("authToken", response.data.token);
-      // Armazena o objeto user retornado pelo login, que já deve ter id, email, role
       localStorage.setItem("user", JSON.stringify(response.data.user)); 
     }
-    
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || "Erro ao tentar fazer login";
-      // console.error("Erro na API de login:", errorMessage);
       throw new Error(errorMessage);
     }
     throw new Error("Erro desconhecido ao fazer login");
   }
 };
 
-/**
- * Função para logout
- */
 export const logout = (): void => {
   if (typeof window !== "undefined") {
     localStorage.removeItem("authToken");
@@ -97,95 +93,89 @@ export const logout = (): void => {
   }
 };
 
-/**
- * Busca os dados do usuário autenticado usando o token.
- * @returns Promise com os dados do usuário.
- */
 export const fetchCurrentUserData = async (): Promise<UserData> => {
   try {
-    // A rota /auth/me deve retornar os dados do usuário (id, email, role)
     const response = await apiClient.get<UserData>("/auth/me");
     if (typeof window !== "undefined" && response.data) {
-      // Atualiza o usuário no localStorage com os dados frescos do backend
       localStorage.setItem("user", JSON.stringify(response.data));
     }
     return response.data;
   } catch (error) {
-    // console.error("Erro ao buscar dados do usuário atual:", error);
-    // Se falhar (ex: token inválido), o interceptor de resposta já deve ter limpado o token.
-    // Relança o erro para que o AuthProvider possa tratar (ex: deslogar o usuário).
     throw error; 
   }
 };
 
-
-/**
- * Obtém o usuário atual do localStorage (usado para inicialização síncrona se necessário)
- */
 export const getCurrentUserFromStorage = (): UserData | null => {
   if (typeof window === "undefined") return null;
-  
   const userString = localStorage.getItem("user");
   try {
     return userString ? JSON.parse(userString) as UserData : null;
   } catch (e) {
-    // console.error("Erro ao parsear usuário do localStorage:", e);
     return null;
   }
 };
 
-/**
- * Busca dashboards
- * @returns Promise com lista de dashboards
- */
-export const fetchDashboards = async (): Promise<Dashboard[]> => {
-  try {
-    const response = await apiClient.get<Dashboard[]>("/dashboards");
-    return response.data;
-  } catch (error) {
-    // console.error("Erro ao buscar dashboards:", error);
-    throw error;
-  }
+// CRUD de Dashboards (Admin)
+export const getAllDashboards = async (): Promise<Dashboard[]> => {
+  const response = await apiClient.get<Dashboard[]>("/dashboards");
+  return response.data;
 };
 
-/**
- * Atualiza dados do usuário no servidor (exemplo, endpoint /users/me não foi confirmado)
- */
-export const updateUserProfile = async (userData: Partial<UserData>) => {
-  try {
-    // Ajuste o endpoint conforme necessário, ex: /users/profile ou /users/:id
-    const response = await apiClient.patch<UserData>("/users/me", userData); 
-    
-    if (typeof window !== "undefined" && response.data) {
-      localStorage.setItem("user", JSON.stringify(response.data));
-    }
-    
-    return response.data;
-  } catch (error) {
-    // console.error("Erro ao atualizar perfil:", error);
-    throw error;
-  }
+export const getDashboardById = async (id: number): Promise<Dashboard> => {
+  const response = await apiClient.get<Dashboard>(`/dashboards/${id}`);
+  return response.data;
 };
 
-/**
- * Verifica se o token é válido (usando a rota /auth/validate)
- */
-export const validateToken = async (): Promise<boolean> => {
-  try {
-    await apiClient.get("/auth/validate"); // A rota /auth/validate retorna { message: 'Token is valid.', user: req.user }
-    return true;
-  } catch (error) {
-    return false;
-  }
+export const createDashboard = async (dashboardData: Omit<Dashboard, "id">): Promise<Dashboard> => {
+  const response = await apiClient.post<Dashboard>("/dashboards", dashboardData);
+  return response.data;
+};
+
+export const updateDashboard = async (id: number, dashboardData: Partial<Omit<Dashboard, "id">>): Promise<Dashboard> => {
+  const response = await apiClient.put<Dashboard>(`/dashboards/${id}`, dashboardData);
+  return response.data;
+};
+
+export const deleteDashboard = async (id: number): Promise<void> => {
+  await apiClient.delete(`/dashboards/${id}`);
+};
+
+// CRUD de Áreas (Admin)
+export type AreaCreatePayload = {
+  name: string;
+};
+export type AreaUpdatePayload = Partial<AreaCreatePayload>;
+
+export const getAllAreas = async (): Promise<Area[]> => {
+  const response = await apiClient.get<Area[]>("/areas");
+  return response.data;
+};
+
+export const getAreaById = async (id: number): Promise<Area> => {
+  const response = await apiClient.get<Area>(`/areas/${id}`);
+  return response.data;
+};
+
+export const createArea = async (areaData: AreaCreatePayload): Promise<Area> => {
+  const response = await apiClient.post<Area>("/areas", areaData);
+  return response.data;
+};
+
+export const updateArea = async (id: number, areaData: AreaUpdatePayload): Promise<Area> => {
+  const response = await apiClient.put<Area>(`/areas/${id}`, areaData);
+  return response.data;
+};
+
+export const deleteArea = async (id: number): Promise<void> => {
+  await apiClient.delete(`/areas/${id}`);
 };
 
 // CRUD de Usuários (Admin)
-
 export type UserCreatePayload = {
   email: string;
-  password?: string; // Senha pode ser opcional na criação se gerada ou enviada de outra forma
-  role: string; // 'Admin' ou 'User'
-  areas?: number[];
+  password?: string; 
+  role: string; 
+  areaIds?: number[]; // Alterado para areaIds para corresponder ao backend
 };
 
 export type UserUpdatePayload = Partial<UserCreatePayload>;
@@ -214,6 +204,14 @@ export const deleteUser = async (id: number): Promise<void> => {
   await apiClient.delete(`/users/${id}`);
 };
 
+export const validateToken = async (): Promise<boolean> => {
+  try {
+    await apiClient.get("/auth/validate");
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
 
 export default apiClient;
 
