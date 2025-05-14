@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Tipos para a API
-type UserData = {
+export type UserData = {
   id: number;
   email: string;
   role: string;
@@ -9,7 +9,7 @@ type UserData = {
   areas?: Area[]; // Adicionado para carregar áreas do usuário
 };
 
-type LoginResponse = {
+export type LoginResponse = {
   token: string;
   user: UserData;
 };
