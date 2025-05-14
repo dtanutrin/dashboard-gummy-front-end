@@ -65,7 +65,7 @@ export function PowerBIEmbed({
         height={iframeConfig.height}
         frameBorder={iframeConfig.frameBorder}
         allowFullScreen={iframeConfig.allowFullScreen}
-        className="w-full h-full min-h-[500px] border-0"
+        className="w-full h-full border-0" // Removido min-h-[500px]
       />
     </div>
   )

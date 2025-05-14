@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode, type ComponentPropsWithoutRef, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // Adicionado Link para o botão de voltar
 import { useAuth } from "../../app/auth/hooks"; 
 import apiClient, { getAllAreas as apiGetAllAreas, Area as ApiArea, Dashboard as ApiDashboard, UserData as ApiUser, UserCreatePayload, UserUpdatePayload, createUser as apiCreateUser, getAllUsers as apiGetAllUsers, updateUser as apiUpdateUser, deleteUser as apiDeleteUser } from '../../lib/api';
 import { toast, Toaster } from 'react-hot-toast';
@@ -237,7 +238,14 @@ export default function AdminPage() {
   return (
     <div className="container mx-auto p-4 sm:p-8">
       <Toaster position="top-right" />
-      <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white">Painel de Administração</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Painel de Administração</h1>
+        <Link href="/dashboard">
+          <Button className="bg-gray-500 hover:bg-gray-600">
+            ← Voltar para Dashboards
+          </Button>
+        </Link>
+      </div>
 
       {/* Abas de Navegação */}
       <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
@@ -322,35 +330,34 @@ export default function AdminPage() {
           </div>
           {showUserForm && (
             <form onSubmit={handleUserFormSubmit} className="mb-6 p-4 border dark:border-gray-700 rounded-md">
-              <h3 className="text-xl mb-3 font-medium dark:text-white">{editingUser ? 'Editar' : 'Adicionar'} Usuário</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="userEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                  <Input type="email" id="userEmail" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} required />
-                </div>
-                <div>
-                  <label htmlFor="userPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Senha {editingUser && "(deixe em branco para não alterar)"}</label>
-                  <Input type="password" id="userPassword" value={userPassword} onChange={(e) => setUserPassword(e.target.value)} required={!editingUser} />
-                </div>
-                <div>
-                  <label htmlFor="userRole" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Perfil</label>
-                  <Select id="userRole" value={userRole} onChange={(e) => setUserRole(e.target.value)} required>
-                    <option value="User">User</option>
-                    <option value="Admin">Admin</option>
-                  </Select>
-                </div>
+              <h3 className="text-xl mb-3 font-medium dark:text-white">{editingUser ? 'Editar' : 'Criar'} Usuário</h3>
+              <div className="mb-3">
+                <label htmlFor="userEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <Input type="email" id="userEmail" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} required />
               </div>
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Áreas de Acesso</label>
+              <div className="mb-3">
+                <label htmlFor="userPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Senha {editingUser ? '(Deixe em branco para não alterar)' : ''}</label>
+                <Input type="password" id="userPassword" value={userPassword} onChange={(e) => setUserPassword(e.target.value)} />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="userRole" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Perfil</label>
+                <Select id="userRole" value={userRole} onChange={(e) => setUserRole(e.target.value)} required>
+                  <option value="User">Usuário</option>
+                  <option value="Admin">Administrador</option>
+                  {/* Adicionar outros perfis se necessário */}
+                </Select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Acesso às Áreas</label>
                 {isLoadingAreas ? <p className="dark:text-gray-300">Carregando áreas...</p> : areas.length === 0 ? <p className="dark:text-gray-300">Nenhuma área cadastrada.</p> : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {areas.map(area => (
                       <label key={area.id} className="flex items-center space-x-2 p-2 border dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                         <input 
                           type="checkbox" 
-                          checked={selectedUserAreaIds.includes(area.id)} 
-                          onChange={() => handleAreaSelection(area.id)} 
-                          className="form-checkbox h-4 w-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                          className="form-checkbox h-4 w-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-pink-600 dark:ring-offset-gray-800"
+                          checked={selectedUserAreaIds.includes(area.id)}
+                          onChange={() => handleAreaSelection(area.id)}
                         />
                         <span className="text-sm text-gray-700 dark:text-gray-300">{area.name}</span>
                       </label>
@@ -358,7 +365,7 @@ export default function AdminPage() {
                   </div>
                 )}
               </div>
-              <div className="mt-6 flex gap-2">
+              <div className="flex gap-2">
                 <Button type="submit">{editingUser ? 'Salvar Alterações' : 'Criar Usuário'}</Button>
                 <Button type="button" onClick={() => { setShowUserForm(false); setEditingUser(null); }} className="bg-gray-500 hover:bg-gray-600">Cancelar</Button>
               </div>
@@ -371,11 +378,13 @@ export default function AdminPage() {
                 <tbody>
                   {users.map(u => (
                     <tr key={u.id}>
-                      <Td>{u.id}</Td><Td>{u.email}</Td><Td>{u.role}</Td>
-                      <Td>{u.areas?.map(a => a.name).join(", ") || 'Nenhuma'}</Td>
+                      <Td>{u.id}</Td>
+                      <Td>{u.email}</Td>
+                      <Td>{u.role}</Td>
+                      <Td>{u.areas?.map(a => a.name).join(', ') || 'Nenhuma'}</Td>
                       <Td>
                         <Button onClick={() => handleUserEdit(u)} className="mr-2 text-sm py-1 px-2 bg-blue-500 hover:bg-blue-600">Editar</Button>
-                        <Button onClick={() => handleUserDelete(u.id)} className="text-sm py-1 px-2 bg-red-500 hover:bg-red-600">Excluir</Button>
+                        {user?.id !== u.id && <Button onClick={() => handleUserDelete(u.id)} className="text-sm py-1 px-2 bg-red-500 hover:bg-red-600">Excluir</Button>}
                       </Td>
                     </tr>
                   ))}
@@ -386,7 +395,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Aba de Áreas (placeholder, pode ser implementada depois) */}
+      {/* Conteúdo da Aba de Áreas (CRUD a ser implementado) */}
       {/* {activeTab === 'areas' && ( ... )} */}
     </div>
   );
