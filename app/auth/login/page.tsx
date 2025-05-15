@@ -32,9 +32,9 @@ export default function Login() {
       <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
         <div>
           <div className="flex justify-center">
-            <Image src="/images/gummy-logo.png" alt="Gummy Original" width={200} height={80} className="mb-4" />
+            <Image src="/images/v2_marca_dta_gummy.png" alt="Gummy Original" width={200} height={80} className="mb-4" />
           </div>
-          <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900 dark:text-white">Dashboards Gummy</h2>
+          <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900 dark:text-white">Relatórios e Dashboards</h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-300">
             Faça login para acessar os dashboards
           </p>

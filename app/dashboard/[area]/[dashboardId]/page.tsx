@@ -11,20 +11,37 @@ import Image from "next/image";
 
 const areaVisuals: { [key: string]: { color: string; icon: string; description: string } } = {
   default: { color: "#607d8b", icon: "📁", description: "Dashboards gerais" },
-  logística: { color: "#e91e63", icon: "🚚", description: "Gestão de entregas e estoque" },
-  marketing: { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" },
-  operações: { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" },
-  cs: { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" },
-  comercial: { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
+  // Usando chaves minúsculas e normalizadas para consistência com decodedAreaSlug
+  "b2b": { color: "#607d8b", icon: "📈", description: "Vendas e Desempenho B2B" },
+  "comercial interno": { color: "#f48fb1", icon: "💼", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial;" },
+  "compras": { color: "#795548", icon: "🛒", description: "Acompanhamento financeiro da Equipe de Compras;" },
+  "cs/monitoramento": { color: "#ff80ab", icon: "🎯", description: "Dashboard de acompanhamento dos canais de atendimento e suporte ao Cliente;" },
+  "influencer": { color: "#9c27b0", icon: "⭐", description: "Relatórios que apresentam os dados de desempenho dos influenciadores;" },
+  "logística": { color: "#e91e63", icon: "🚚", description: "Gestão de estoque e indicadores Logísticos;" },
+  "operações e controle": { color: "#c2185b", icon: "⚙️", description: "Processos organizacionais e operacionais" },
+  "performance e vendas": { color: "#4caf50", icon: "💹", description: "Relatórios de vendas, Aquisição de mídia e influencer, pedidos e acompanhamento de metas em geral." },
+  "retenção": { color: "#00bcd4", icon: "🔄", description: "Relatórios com Foco em dados de Clientes;" },
+  "rh": { color: "#ff9800", icon: "👥", description: "Relatórios voltados para a Gestão de Pessoas;" },
+  // Mantendo os antigos para referência caso o nome da área não bata com os novos
+  "marketing": { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" }, 
+  "operações": { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" }, 
+  "cs": { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, 
+  "comercial": { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
 };
 
 export default function ViewDashboardPage({ params: paramsPromise }: { params: Promise<{ area: string; dashboardId: string }> }) {
   const params = use(paramsPromise);
 
-  const decodedAreaSlug = decodeUrlParam(params?.area || '');
+  // decodedAreaSlug já deve ser o nome da área decodificado e em minúsculas (ex: "cs/monitoramento")
+  const decodedAreaSlug = decodeUrlParam(params?.area || ''); 
   const dashboardId = Number.parseInt(params?.dashboardId || '0');
   
-  const areaDisplayName = decodedAreaSlug.charAt(0).toUpperCase() + decodedAreaSlug.slice(1);
+  // Para exibição, capitalizamos o nome da área
+  const areaDisplayName = decodedAreaSlug
+    .split('/')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('/');
+    
   const visual = areaVisuals[decodedAreaSlug.toLowerCase()] || areaVisuals.default;
   const areaColor = visual.color;
 
@@ -47,10 +64,20 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
         return;
       }
 
-      const userHasAreaAccess = user.role?.toLowerCase() === 'admin' || user.areas?.some(area => area.name.toLowerCase().replace(/\s+/g, "-") === decodedAreaSlug);
+      // CORREÇÃO 1: Lógica de verificação de acesso à área
+      // Assume que decodedAreaSlug é o nome da área já decodificado e em minúsculas.
+      // Assume que user.areas contém objetos com uma propriedade 'name'.
+      const userHasAreaAccess = 
+        user.role?.toLowerCase() === 'admin' || 
+        user.areas?.some(area => area.name.toLowerCase() === decodedAreaSlug.toLowerCase());
       
       if (!userHasAreaAccess && !userLoading) {
-        router.push("/dashboard");
+        // Se não tem acesso, redireciona para a página principal de dashboards
+        // Isso pode causar um loop se a lógica de acesso na página /dashboard também o redirecionar de volta aqui.
+        // É crucial que a lógica de permissão seja consistente em todas as páginas.
+        setError("Acesso negado a esta área ou dashboard."); // Informa o usuário
+        // router.push("/dashboard"); // Comentar o redirecionamento para evitar loop e mostrar o erro.
+        setIsLoadingDashboard(false);
         return;
       }
 
@@ -59,6 +86,10 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
         setError(null);
         try {
           const fetchedDashboard = await getDashboardById(dashboardId);
+          // Adicionalmente, verificar se o dashboard pertence à área esperada (decodedAreaSlug)
+          // Esta verificação depende de como a API getDashboardById e o objeto fetchedDashboard são estruturados.
+          // Se fetchedDashboard tiver uma propriedade como areaName ou areaId, podemos validar.
+          // Exemplo: if (fetchedDashboard.areaName.toLowerCase() !== decodedAreaSlug.toLowerCase()) { throw new Error("Dashboard não pertence a esta área.")}
           setDashboard(fetchedDashboard);
         } catch (err) {
           console.error("Erro ao buscar dashboard:", err);
@@ -75,32 +106,25 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
   if (userLoading || isLoadingDashboard) {
     return (
   <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-pink-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      {/* Container principal para centralizar todo o conteúdo do loader */}
       <div className="flex flex-col items-center">
-        
-        {/* 1. Imagem da Gummy */}
         <Image
           src="/images/GUMMY-smile.png"
           alt="Carregando Gummy"
-          width={180} // Ajuste o tamanho conforme desejar
-          height={180} // Ajuste o tamanho conforme desejar
-          className="mb-4" // Adiciona uma margem inferior à imagem
+          width={180}
+          height={180}
+          className="mb-4"
         />
-
-        {/* 2. Container para o spinner e o texto, para alinhá-los horizontalmente */}
         <div className="flex items-center">
-          {/* Spinner rosa (círculo giratório) */}
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div>
-          
-          {/* Texto de carregamento */}
           <p className="ml-4 text-pink-700 dark:text-pink-300">Carregando Dashboard</p> 
-          {/* Adicionei dark:text-pink-300 para melhor visualização no modo escuro, ajuste conforme seu tema */}
         </div>
-
       </div>
     </div>
     );
   }
+
+  // CORREÇÃO 2: Codificar o decodedAreaSlug para os links de "Voltar"
+  const encodedAreaForLink = encodeURIComponent(decodedAreaSlug);
 
   if (error) {
     return (
@@ -110,7 +134,7 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
           <div className="px-4 py-6 sm:px-0 text-center">
             <h1 className="text-2xl font-semibold text-red-600 mb-4">Erro</h1>
             <p className="text-gray-700 dark:text-gray-300">{error}</p>
-            <Link href={`/dashboard/${decodedAreaSlug}`} className="mt-4 inline-block text-pink-600 hover:text-pink-800 dark:text-pink-400 dark:hover:text-pink-200">
+            <Link href={`/dashboard/${encodedAreaForLink}`} className="mt-4 inline-block text-pink-600 hover:text-pink-800 dark:text-pink-400 dark:hover:text-pink-200">
               Voltar para a área de {areaDisplayName}
             </Link>
             <br/>
@@ -138,7 +162,7 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
         <div className="px-4 py-6 sm:px-0 flex flex-col flex-grow">
           <div className="flex items-center mb-6">
             <Link
-              href={`/dashboard/${decodedAreaSlug}`}
+              href={`/dashboard/${encodedAreaForLink}`}
               className="text-pink-600 hover:text-pink-800 dark:text-pink-400 dark:hover:text-pink-300 mr-4 transition-colors"
             >
               ← Voltar para {areaDisplayName}
@@ -147,13 +171,10 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
               {dashboard.name}
             </h1>
           </div>
-
-          {/* Card do Dashboard: deve ser flex-col, flex-grow e relative para o posicionamento absoluto do filho */}
           <div
             className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden transition-all hover:shadow-lg flex flex-col flex-grow relative"
             style={{ borderTop: `5px solid ${areaColor}` }}
           >
-            {/* PowerBIEmbed agora é posicionado absolutamente para preencher o card */}
             <PowerBIEmbed 
               reportId={dashboard.url} 
               title={dashboard.name}
