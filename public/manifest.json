@@ -14,15 +14,9 @@
   "icons": [
     {
       "src": "/favicon.png",
-      "sizes": "192x192",
+      "sizes": "1024x1024",
       "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/favicon.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "screenshots": [
@@ -35,7 +29,7 @@
     },
     {
       "src": "/images/screenshots/gummy-mobile-744-1600.jpg",
-      "sizes": "744x1600",
+      "sizes": "795x1600",
       "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Outra Visualização Mobile do Dashboard Gummy"
