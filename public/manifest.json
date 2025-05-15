@@ -1,0 +1,21 @@
+{
+  "name": "Gummy Dashboards",
+  "short_name": "Gummy Dash",
+  "description": "Visualização de relatórios Power BI da Gummy Original",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ff4081",
+  "theme_color": "#ff4081",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
