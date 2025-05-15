@@ -35,8 +35,6 @@ const AreaCard = ({ area }: AreaCardProps) => {
           <h2 className="text-2xl font-bold mb-2">{area.name}</h2>
           <p className="opacity-80 text-sm mb-4 flex-grow">{area.description}</p>
           
-          {/* Seção da lista de Dashboards dentro do Card REMOVIDA */}
-
           <div className="mt-auto w-full pt-4">
             <Link href={`/dashboard/${areaLinkSlug}`} className="block w-full">
                 <button

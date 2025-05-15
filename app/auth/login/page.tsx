@@ -88,15 +88,6 @@ export default function Login() {
               {loading ? "Entrando..." : "Entrar"}
             </button>
           </div>
-
-          {/* Remover ou comentar as credenciais de teste hardcoded */}
-          {/* 
-          <div className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">
-            <p>Credenciais de teste:</p>
-            <p>Admin: admin@example.com / admin123</p>
-            <p>Usuário: logistica@example.com / logistica123</p>
-          </div>
-          */}
         </form>
       </div>
     </div>

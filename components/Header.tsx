@@ -22,7 +22,6 @@ export default function Header() {
             <div className="flex-shrink-0 flex items-center">
               <Link href="/dashboard" className="flex items-center">
                 <Image src="/images/gummy-logo.png" alt="Gummy Original" width={120} height={40} />
-                {/* Texto "Dashboards" removido daqui */}
               </Link>
             </div>
           </div>

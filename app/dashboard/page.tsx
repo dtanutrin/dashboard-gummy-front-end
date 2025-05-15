@@ -8,6 +8,7 @@ import AreaCard from "../../components/AreaCard";
 import Image from "next/image";
 import { getAllAreas, Area as ApiArea, Dashboard as ApiDashboard } from "../../lib/api"; // Importando funções da API e tipos
 
+
 // Interface para Área no frontend, pode incluir dados de exibição como cor/ícone
 interface FrontendArea extends ApiArea {
   slug: string; // Mantido para compatibilidade com lógica existente, se necessário
@@ -110,10 +111,31 @@ export default function DashboardPage() {
 
   if (loading || isLoadingAreas || (!loading && !isAuthenticated)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-pink-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div>
-        <p className="ml-4 text-pink-700">Carregando...</p>
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-pink-100 dark:from-gray-900 dark:to-gray-800 p-4">
+      {/* Container principal para centralizar todo o conteúdo do loader */}
+      <div className="flex flex-col items-center">
+        
+        {/* 1. Imagem da Gummy */}
+        <Image
+          src="/images/GUMMY-smile.png"
+          alt="Carregando Gummy"
+          width={180} // Ajuste o tamanho conforme desejar
+          height={180} // Ajuste o tamanho conforme desejar
+          className="mb-4" // Adiciona uma margem inferior à imagem
+        />
+
+        {/* 2. Container para o spinner e o texto, para alinhá-los horizontalmente */}
+        <div className="flex items-center">
+          {/* Spinner rosa (círculo giratório) */}
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div>
+          
+          {/* Texto de carregamento */}
+          <p className="ml-4 text-pink-700 dark:text-pink-300">Carregando</p> 
+          {/* Adicionei dark:text-pink-300 para melhor visualização no modo escuro, ajuste conforme seu tema */}
+        </div>
+
       </div>
+    </div>
     );
   }
 
