@@ -2,20 +2,60 @@
   "name": "Gummy Dashboards",
   "short_name": "Gummy Dash",
   "description": "Visualização de relatórios Power BI da Gummy Original",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#ff4081",
   "theme_color": "#ff4081",
+  "lang": "pt-BR",
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "/favicon.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/favicon.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/images/screenshots/gummy-mobile-743x1600.jpg",
+      "sizes": "743x1600",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Visualização Mobile do Dashboard Gummy"
+    },
+    {
+      "src": "/images/screenshots/gummy-mobile-744-1600.jpg",
+      "sizes": "744x1600",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Outra Visualização Mobile do Dashboard Gummy"
+    },
+    {
+      "src": "/images/screenshots/gummy-screen-1569-903.png",
+      "sizes": "1569x903",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Visualização Desktop do Dashboard Gummy"
+    },
+    {
+      "src": "/images/screenshots/gummy-screen-1986x908.png",
+      "sizes": "1986x908",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Outra Visualização Desktop do Dashboard Gummy"
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
 }
