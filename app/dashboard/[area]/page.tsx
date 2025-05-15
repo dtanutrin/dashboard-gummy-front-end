@@ -58,7 +58,8 @@ export default function AreaDashboardsPage({ params: paramsPromise }: { params: 
         setError(null);
         try {
           const allAreas = await getAllAreas(); // Corrigido: Chamada direta da função importada
-          const currentArea = allAreas.find(a => a.name.toLowerCase().replace(/\s+/g, "-") === decodedAreaSlug);
+          const currentArea = allAreas.find(a => a.name.toLowerCase() === decodedAreaSlug.toLowerCase());
+
           
           if (!currentArea) {
             setError("Área não encontrada ou você não tem acesso.");

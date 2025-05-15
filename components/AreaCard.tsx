@@ -35,7 +35,7 @@ const AreaCard = ({ area }: AreaCardProps) => {
           <p className="opacity-80 text-sm mb-4 flex-grow">{area.description}</p>
           
           <div className="mt-auto w-full pt-4">
-            <Link href={`/dashboard/${areaLinkSlug}`} className="block w-full">
+            <Link href={`/dashboard/${encodeURIComponent(area.name)}`}>
                 <button
                 className="w-full px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-sm font-medium transition-all duration-200"
                 style={{ backdropFilter: "blur(4px)" }}
