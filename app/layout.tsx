@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   icons: { // Adicionando a forma recomendada para favicon em Next.js 13+
     icon: '/favicon.png',
   },
+  manifest: '/manifest.json'
 }
 
 export default function RootLayout({
