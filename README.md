@@ -1,7 +1,7 @@
 # Gummy Dashboards - Frontend
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/dtanutrin/dashboard-gummy-front-end/main/public/images/gummy-logo.png" alt="Gummy Logo" width="200"/>
+  <img src="https://raw.githubusercontent.com/dtanutrin/dashboard-gummy-front-end/main/public/images/v2_marca_dta_gummy.png alt="Gummy Logo" width="200"/>
 </p>
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/ac01aa39-6ab4-467c-8937-62e9aeef532f/deploy-status)](https://app.netlify.com/projects/dashboardgummy/deploys)
