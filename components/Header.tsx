@@ -21,7 +21,7 @@ export default function Header() {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/dashboard" className="flex items-center">
-                <Image src="/images/gummy-logo.png" alt="Gummy Original" width={120} height={40} />
+                <Image src="/images/v2_marca_dta_gummy.png" alt="DTA / Gummy Original" width={120} height={40} />
               </Link>
             </div>
           </div>
