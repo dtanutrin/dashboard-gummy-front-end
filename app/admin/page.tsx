@@ -70,6 +70,9 @@ export default function AdminPage() {
   // Estados para Áreas
   const [areas, setAreas] = useState<Area[]>([]);
   const [isLoadingAreas, setIsLoadingAreas] = useState(true);
+  const [showAreaForm, setShowAreaForm] = useState(false);
+  const [editingArea, setEditingArea] = useState<Area | null>(null);
+  const [areaName, setAreaName] = useState('');
 
   // Estados para Usuários
   const [users, setUsers] = useState<User[]>([]);
@@ -80,8 +83,11 @@ export default function AdminPage() {
   const [userPassword, setUserPassword] = useState('');
   const [userRole, setUserRole] = useState('User');
   const [selectedUserAreaIds, setSelectedUserAreaIds] = useState<number[]>([]);
-
-  const [activeTab, setActiveTab] = useState<'dashboards' | 'users' | 'areas'>('dashboards');
+  const [activeTab, setActiveTab] = useState<
+'dashboards' | 'users' | 'areas'
+>(
+'dashboards'
+);
 
   useEffect(() => {
     if (!userLoading) {
@@ -126,6 +132,55 @@ export default function AdminPage() {
       toast.error(error.response?.data?.message || error.message || 'Erro ao buscar usuários.');
     }
     setIsLoadingUsers(false);
+  };
+
+  // Handlers para Áreas
+  const handleAreaFormSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!areaName.trim()) {
+      toast.error('O nome da área é obrigatório.');
+      return;
+    }
+    const payload = { name: areaName.trim() };
+    try {
+      if (editingArea) {
+        await apiClient.put<Area>(`/areas/${editingArea.id}`, payload);
+        toast.success('Área atualizada com sucesso!');
+      } else {
+        await apiClient.post<Area>('/areas', payload);
+        toast.success('Área criada com sucesso!');
+      }
+      setShowAreaForm(false);
+      setEditingArea(null);
+      setAreaName('');
+      fetchAreasData(); // Atualiza a lista de áreas e também a lista usada nos forms de dashboard/usuário
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Erro ao salvar área.');
+    }
+  };
+
+  const handleAreaEdit = (area: Area) => {
+    setEditingArea(area);
+    setAreaName(area.name);
+    setShowAreaForm(true);
+    setActiveTab('areas');
+  };
+
+  const handleAreaDelete = async (areaId: number) => {
+    if (!confirm('Tem certeza que deseja excluir esta área? Isso pode afetar dashboards e acessos de usuários vinculados.')) return;
+    try {
+      await apiClient.delete(`/areas/${areaId}`);
+      toast.success('Área excluída com sucesso!');
+      fetchAreasData(); // Atualiza a lista de áreas
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Erro ao excluir área.');
+    }
+  };
+
+  const openAreaFormForNew = () => {
+    setEditingArea(null);
+    setAreaName('');
+    setShowAreaForm(true);
   };
 
   useEffect(() => {
@@ -274,6 +329,12 @@ export default function AdminPage() {
           >
             Usuários
           </button>
+          <button
+            onClick={() => setActiveTab('areas')}
+            className={`${activeTab === 'areas' ? 'border-pink-500 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'} whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm`}
+          >
+            Áreas
+          </button>
         </nav>
       </div>
 
@@ -404,6 +465,51 @@ export default function AdminPage() {
                         <div className="flex flex-col sm:flex-row gap-2">
                             <Button onClick={() => handleUserEdit(usr)} variant="outline" size="sm" className="w-full sm:w-auto">Editar</Button>
                             <Button onClick={() => handleUserDelete(usr.id)} variant="danger" size="sm" className="w-full sm:w-auto">Excluir</Button>
+                        </div>
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'areas' && (
+        <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+            <h2 className="text-xl sm:text-2xl font-semibold text-pink-600 dark:text-pink-400">Gerenciamento de Áreas</h2>
+            <Button onClick={openAreaFormForNew} size="md" className="w-full sm:w-auto">Adicionar Nova Área</Button>
+          </div>
+          {showAreaForm && (
+            <form onSubmit={handleAreaFormSubmit} className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-md space-y-4">
+              <h3 className="text-lg sm:text-xl mb-3 font-medium dark:text-white">{editingArea ? 'Editar' : 'Adicionar'} Área</h3>
+              <div>
+                <label htmlFor="areaNameInput" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Área</label>
+                <Input type="text" id="areaNameInput" value={areaName} onChange={(e) => setAreaName(e.target.value)} required />
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <Button type="submit" size="md" className="w-full sm:w-auto">{editingArea ? 'Salvar Alterações' : 'Adicionar Área'}</Button>
+                <Button type="button" variant="secondary" size="md" onClick={() => { setShowAreaForm(false); setEditingArea(null); setAreaName(''); }} className="w-full sm:w-auto">Cancelar</Button>
+              </div>
+            </form>
+          )}
+          {isLoadingAreas ? <p className="dark:text-gray-300 text-center py-4">Carregando áreas...</p> : areas.length === 0 && !showAreaForm ? <p className="dark:text-gray-300 text-center py-4">Nenhuma área cadastrada.</p> : (
+            <div className="overflow-x-auto">
+              <Table>
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr><Th>ID</Th><Th>Nome</Th><Th>Ações</Th></tr>
+                </thead>
+                <tbody>
+                  {areas.map(area => (
+                    <tr key={area.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <Td>{area.id}</Td>
+                      <Td>{area.name}</Td>
+                      <Td>
+                        <div className="flex space-x-2">
+                          <Button variant="ghost" size="sm" onClick={() => handleAreaEdit(area)}>Editar</Button>
+                          <Button variant="danger" size="sm" onClick={() => handleAreaDelete(area.id)}>Excluir</Button>
                         </div>
                       </Td>
                     </tr>

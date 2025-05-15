@@ -21,12 +21,21 @@ interface FrontendArea extends ApiArea {
 // Mapeamento de cores e ícones para áreas (pode ser expandido ou movido para um config)
 const areaVisuals: { [key: string]: { color: string; icon: string; description: string } } = {
   default: { color: "#607d8b", icon: "📁", description: "Dashboards gerais" }, // Cor e ícone padrão
-  logística: { color: "#e91e63", icon: "🚚", description: "Gestão de entregas e estoque" },
-  marketing: { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" },
-  operações: { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" },
-  cs: { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" },
-  comercial: { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
-  // Adicione mais áreas e seus visuais conforme necessário
+  b2b: { color: "#607d8b", icon: "📈", description: "Vendas e Desempenho B2B" },
+  "comercial interno": { color: "#f48fb1", icon: "💼", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial;" },
+  compras: { color: "#795548", icon: "🛒", description: "Acompanhamento financeiro da Equipe de Compras;" },
+  "cs/monitoramento": { color: "#ff80ab", icon: "🎯", description: "Dashboard de acompanhamento dos canais de atendimento e suporte ao Cliente;" },
+  influencer: { color: "#9c27b0", icon: "⭐", description: "Relatórios que apresentam os dados de desempenho dos influenciadores;" },
+  logística: { color: "#e91e63", icon: "🚚", description: "Gestão de estoque e indicadores Logísticos;" },
+  "operações e controle": { color: "#c2185b", icon: "⚙️", description: "Processos organizacionais e operacionais" },
+  "performance e vendas": { color: "#4caf50", icon: "💹", description: "Relatórios de vendas, Aquisição de mídia e influencer, pedidos e acompanhamento de metas em geral." },
+  retenção: { color: "#00bcd4", icon: "🔄", description: "Relatórios com Foco em dados de Clientes;" },
+  rh: { color: "#ff9800", icon: "👥", description: "Relatórios voltados para a Gestão de Pessoas;" },
+  // Manter os existentes que não foram explicitamente alterados, ou ajustar conforme a nova lista
+  marketing: { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" }, // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
+  operações: { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" }, // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
+  cs: { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
+  comercial: { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" } // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
 };
 
 export default function DashboardPage() {
@@ -144,7 +153,7 @@ export default function DashboardPage() {
       <Header />
       <main className="flex-grow max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 w-full">
         <div className="mb-8 text-center pt-8"> {/* Aumentado padding-top e removido logo */}
-          <h1 className="text-3xl font-bold text-pink-600 dark:text-pink-400 mb-2">Dashboards Gummy</h1>
+          <h1 className="text-3xl font-bold text-pink-600 dark:text-pink-400 mb-2">Relatórios e Dashboards</h1>
           <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Selecione uma área para visualizar os dashboards de Power BI específicos e acompanhar os indicadores de
             desempenho.

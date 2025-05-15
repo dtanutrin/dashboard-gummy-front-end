@@ -9,7 +9,6 @@ interface FrontendArea extends ApiArea {
   color: string;
   icon: string;
   description: string;
-  // dashboards?: ApiDashboard[]; // Removido - dashboards não serão listados aqui
 }
 
 interface AreaCardProps {
@@ -41,7 +40,7 @@ const AreaCard = ({ area }: AreaCardProps) => {
                 className="w-full px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-sm font-medium transition-all duration-200"
                 style={{ backdropFilter: "blur(4px)" }}
                 >
-                Ver Área Principal
+                Acessar Área
                 </button>
             </Link>
           </div>

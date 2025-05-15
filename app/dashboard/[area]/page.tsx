@@ -13,10 +13,20 @@ import Image from "next/image";
 // Cores por área (pode ser movido para um config ou vir da API de Areas futuramente)
 const areaVisuals: { [key: string]: { color: string; icon: string; description: string } } = {
   default: { color: "#607d8b", icon: "📁", description: "Dashboards gerais" },
-  logística: { color: "#e91e63", icon: "🚚", description: "Gestão de entregas e estoque" },
-  marketing: { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" },
-  operações: { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" },
-  cs: { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" },
+  b2b: { color: "#607d8b", icon: "📈", description: "Vendas e Desempenho B2B" },
+  "comercial interno": { color: "#f48fb1", icon: "💼", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial;" },
+  compras: { color: "#795548", icon: "🛒", description: "Acompanhamento financeiro da Equipe de Compras;" },
+  "cs/monitoramento": { color: "#ff80ab", icon: "🎯", description: "Dashboard de acompanhamento dos canais de atendimento e suporte ao Cliente;" },
+  influencer: { color: "#9c27b0", icon: "⭐", description: "Relatórios que apresentam os dados de desempenho dos influenciadores;" },
+  logística: { color: "#e91e63", icon: "🚚", description: "Gestão de estoque e indicadores Logísticos;" },
+  "operações e controle": { color: "#c2185b", icon: "⚙️", description: "Processos organizacionais e operacionais" },
+  "performance e vendas": { color: "#4caf50", icon: "💹", description: "Relatórios de vendas, Aquisição de mídia e influencer, pedidos e acompanhamento de metas em geral." },
+  retenção: { color: "#00bcd4", icon: "🔄", description: "Relatórios com Foco em dados de Clientes;" },
+  rh: { color: "#ff9800", icon: "👥", description: "Relatórios voltados para a Gestão de Pessoas;" },
+  // Mantendo os antigos para referência caso o nome da área não bata com os novos
+  marketing: { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" }, 
+  operações: { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" }, 
+  cs: { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, 
   comercial: { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
 };
 
@@ -143,10 +153,10 @@ export default function AreaDashboardsPage({ params: paramsPromise }: { params: 
             ← Voltar para todas as áreas
           </Link>
           <h1 className="text-3xl font-bold mt-2 mb-3" style={{ color: areaColor }}>
-            {visual.icon} Dashboards de {areaData.name}
+            {visual.icon} {areaData.name}
           </h1>
           <p className="text-gray-600 dark:text-gray-300 max-w-2xl">
-            Selecione um dashboard para visualizar os dados detalhados.
+            {visual.description}
           </p>
         </div>
 
