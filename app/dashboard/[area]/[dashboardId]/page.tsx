@@ -123,10 +123,10 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
   }
 
   return (
-    <div className="min-h-screen bg-pink-50 dark:bg-gray-900">
+    <div className="bg-pink-50 dark:bg-gray-900">
       <Header />
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+      <main className="flex-grow max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 w-full flex flex-col">
+        <div className="px-4 py-6 sm:px-0 flex flex-col flex-grow">
           <div className="flex items-center mb-6">
             <Link
               href={`/dashboard/${decodedAreaSlug}`}
@@ -140,18 +140,14 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
           </div>
 
           <div
-            className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden transition-all hover:shadow-lg"
+            className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden transition-all hover:shadow-lg flex-grow flex flex-col"
             style={{ borderTop: `4px solid ${areaColor}` }}
           >
-            {/* A descrição pode vir do dashboard.description se existir no tipo e na API */}
-            {/* <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <p className="text-gray-600 dark:text-gray-300">{dashboard.description || "Descrição não disponível."}</p>
-            </div> */}
-            <div className="w-full min-h-[calc(100vh-200px)]"> {/* Ajuste de altura para melhor visualização */}
+            <div className="w-full h-full flex-grow">
               <PowerBIEmbed 
                 reportId={dashboard.url} 
                 title={dashboard.name}
-                className="w-full h-full min-h-[calc(100vh-200px)]"
+                className="w-full h-full"
               />
             </div>
           </div>

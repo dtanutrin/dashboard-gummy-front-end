@@ -27,7 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="light">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <head>
+        <link rel="icon" href="/favicon.png" />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-pink-50 dark:bg-gray-900`}>
       <ClientAuthProvider>
       {children}
       </ClientAuthProvider>
@@ -35,3 +38,4 @@ export default function RootLayout({
     </html>
   )
 }
+

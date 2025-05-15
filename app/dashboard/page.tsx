@@ -1,9 +1,8 @@
-// Caminho do arquivo: /home/ubuntu/dashboard-gummy-front-end/app/dashboard/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../app/auth/hooks"; // Corrigido para o caminho correto de useAuth
+import { useAuth } from "../../app/auth/hooks"; // Alterado para useAuth
 import Header from "../../components/Header";
 import AreaCard from "../../components/AreaCard";
 import Image from "next/image";
@@ -30,7 +29,7 @@ const areaVisuals: { [key: string]: { color: string; icon: string; description: 
 };
 
 export default function DashboardPage() {
-  const { user, loading, isAuthenticated } = useAuth(); 
+  const { user, loading, isAuthenticated } = useAuth(); // Usando useAuth
   const router = useRouter();
   const [displayedAreas, setDisplayedAreas] = useState<FrontendArea[]>([]);
   const [isLoadingAreas, setIsLoadingAreas] = useState(true);
@@ -46,28 +45,44 @@ export default function DashboardPage() {
       const fetchAreasAndDashboards = async () => {
         setIsLoadingAreas(true);
         try {
+          // 1. Buscar todas as áreas da API
           const apiAreas = await getAllAreas();
           
+          // 2. Para cada área, buscar seus dashboards (ou modificar backend para incluir dashboards na rota de áreas)
+          // Por simplicidade agora, vamos assumir que o backend em /api/areas já retorna dashboards associados
+          // ou que temos uma rota /api/areas/:id/dashboards.
+          // Se não, precisaremos de outra chamada ou ajuste no backend.
+          // Vamos simular que `apiAreas` já pode conter `dashboards` ou que faremos chamadas adicionais.
+
           const processedAreas: FrontendArea[] = apiAreas.map(area => {
             const visual = areaVisuals[area.name.toLowerCase()] || areaVisuals.default;
             return {
               ...area,
-              slug: area.name.toLowerCase().replace(/\s+/g, "-"), 
-              color: visual.color,
+              slug: area.name.toLowerCase().replace(/\s+/g, "-"), // Gerar slug a partir do nome
+              color: "#ff4081", // Cor padronizada para Marketing
               icon: visual.icon,
-              description: visual.description, 
-              dashboards: area.dashboards || [] // Garante que dashboards seja um array
+              description: visual.description, // Adicionar descrição mockada ou buscar da API se disponível
+              // dashboards: area.dashboards || [] // Se o backend já incluir dashboards
             };
           });
 
+          // Lógica de filtragem de áreas baseada no perfil do usuário (Admin vê tudo, outros veem áreas permitidas)
+          // Esta lógica de `user.areas` (slugs) precisa ser compatível com o que `fetchCurrentUserData` retorna.
+          // Se `user.areas` for uma lista de IDs de área, a filtragem mudaria.
+          // Por enquanto, vamos assumir que `user.areas` (se existir) é uma lista de nomes ou slugs.
+          
           let filteredAreas: FrontendArea[];
           if (user.role?.toLowerCase() === "admin") {
             filteredAreas = processedAreas;
           } else {
+            // Se o usuário não for admin, filtramos pelas áreas que ele tem acesso.
+            // A propriedade `user.areas` deve ser uma lista de nomes de áreas ou IDs.
+            // Vamos assumir que `user.areas` é uma lista de objetos Area com `id` e `name`.
             const userAllowedAreaIds = user.areas?.map(a => a.id) || [];
             if (userAllowedAreaIds.length > 0) {
                  filteredAreas = processedAreas.filter(area => userAllowedAreaIds.includes(area.id));
             } else {
+                // Se user.areas não estiver definido ou vazio, e não for admin, não mostra nada.
                 filteredAreas = [];
             }
           }
@@ -82,6 +97,7 @@ export default function DashboardPage() {
 
         } catch (error) {
           console.error("Erro ao buscar áreas ou dashboards:", error);
+          // Tratar erro, talvez mostrar uma mensagem para o usuário
           setDebugUserInfo("Erro ao carregar dados das áreas.");
         } finally {
           setIsLoadingAreas(false);
@@ -102,13 +118,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-pink-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-white">
+    <div className="bg-gradient-to-br from-pink-50 to-pink-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-white">
       <Header />
-      <main className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-        <div className="mb-12 text-center">
-          <div className="flex justify-center mb-4">
-            <Image src="/images/gummy-logo.png" alt="Gummy Original" width={180} height={60} priority />
-          </div>
+      <main className="flex-grow max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 w-full">
+        <div className="mb-8 text-center pt-8"> {/* Aumentado padding-top e removido logo */}
           <h1 className="text-3xl font-bold text-pink-600 dark:text-pink-400 mb-2">Dashboards Gummy</h1>
           <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Selecione uma área para visualizar os dashboards de Power BI específicos e acompanhar os indicadores de
@@ -141,14 +154,6 @@ export default function DashboardPage() {
           </div>
         )}
       </main>
-
-      <footer className="mt-16 py-8 bg-white bg-opacity-50 dark:bg-gray-800 dark:bg-opacity-50 border-t border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-gray-500 dark:text-gray-400 text-sm">
-            <p>Gummy Dashboards © 2025</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
