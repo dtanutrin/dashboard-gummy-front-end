@@ -1,72 +1,33 @@
 "use client"
 
 interface PowerBIEmbedProps {
-  reportId: string
-  title: string
-  pageName?: string
-  filters?: any
-  className?: string
+  reportId: string; // Deve ser a URL de visualização completa do Power BI (ex: https://app.powerbi.com/view?r=...)
+  title: string;
+  className?: string; // Ex: "w-full h-full min-h-[600px]"
 }
 
-export const PowerBIConfig = {
-  getEmbedUrl: (reportId: string) => {
-    if (reportId.startsWith("https://app.powerbi.com/")) {
-      return reportId
-    }
-    return `https://app.powerbi.com/reportEmbed?reportId=${reportId}&autoAuth=true`
-  },
+export function PowerBIEmbed({ reportId, title, className = "" }: PowerBIEmbedProps) {
+  if (!reportId) {
+    return <div className="p-4 text-red-500">URL do relatório Power BI não fornecida.</div>;
+  }
 
-  getEmbedParameters: (reportId: string, pageName?: string, filters?: any) => {
-    let url = PowerBIConfig.getEmbedUrl(reportId)
-
-    if (reportId.startsWith("https://app.powerbi.com/")) {
-      return url
-    }
-
-    if (pageName) {
-      url += `&pageName=${pageName}`
-    }
-
-    if (filters) {
-      const filterString = encodeURIComponent(JSON.stringify(filters))
-      url += `&$filter=${filterString}`
-    }
-
-    return url
-  },
-
-  getIframeConfig: (title: string) => {
-    return {
-      title,
-      width: "100%",
-      height: "100%",
-      frameBorder: "0" as const,
-      allowFullScreen: true,
-    }
-  },
-}
-
-export function PowerBIEmbed({
-  reportId,
-  title,
-  pageName,
-  filters,
-  className = ""
-}: PowerBIEmbedProps) {
-  const embedUrl = PowerBIConfig.getEmbedParameters(reportId, pageName, filters)
-  const iframeConfig = PowerBIConfig.getIframeConfig(title)
+  // Garante que a URL, se for um link de embed do Power BI, seja usada diretamente.
+  // Se for um ID de relatório, idealmente deveria ser processado para formar a URL de embed.
+  // Para este teste, estamos assumindo que reportId já é a URL de visualização direta que funcionou no HTML.
 
   return (
-    <div className={`w-full h-full ${className}`}>
+    // O className (com w-full, h-full, min-h-[600px]) é aplicado a este div wrapper pelo page.tsx
+    <div className={className}>
       <iframe
-        src={embedUrl}
-        title={iframeConfig.title}
-        width={iframeConfig.width}
-        height={iframeConfig.height}
-        frameBorder={iframeConfig.frameBorder}
-        allowFullScreen={iframeConfig.allowFullScreen}
-        className="w-full h-full border-0" // Removido min-h-[500px]
-      />
+        title={title}
+        width="100%"
+        height="40%" // O iframe tentará ocupar 100% da altura do seu pai (o div acima)
+        src={reportId}
+        frameBorder="0"
+        allowFullScreen={true}
+        style={{ display: 'block', border: 'none' }} // Estilos básicos para o iframe
+      ></iframe>
     </div>
-  )
+  );
 }
+

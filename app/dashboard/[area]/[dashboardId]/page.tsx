@@ -123,7 +123,7 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
   }
 
   return (
-    <div className="bg-pink-50 dark:bg-gray-900">
+    <div className="flex flex-col h-full bg-pink-50 dark:bg-gray-900">
       <Header />
       <main className="flex-grow max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 w-full flex flex-col">
         <div className="px-4 py-6 sm:px-0 flex flex-col flex-grow">
@@ -140,14 +140,14 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
           </div>
 
           <div
-            className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden transition-all hover:shadow-lg flex-grow flex flex-col"
-            style={{ borderTop: `4px solid ${areaColor}` }}
+            className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden transition-all hover:shadow-lg"
+            style={{ borderTop: `5px solid ${areaColor}` }}
           >
-            <div className="w-full h-full flex-grow">
+            <div className="w-full min-h-[600px]">
               <PowerBIEmbed 
                 reportId={dashboard.url} 
                 title={dashboard.name}
-                className="w-full h-full"
+                className="w-full h-full min-h-[600px]"
               />
             </div>
           </div>
