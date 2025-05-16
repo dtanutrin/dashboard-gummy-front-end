@@ -28,7 +28,7 @@ export interface Dashboard {
   name: string;
   url: string;
   areaId: number;
-  // description?: string; // Se o backend enviar, adicione aqui
+  information?: string; 
 }
 
 // Configuração base
