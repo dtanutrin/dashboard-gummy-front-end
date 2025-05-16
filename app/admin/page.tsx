@@ -190,6 +190,17 @@ export default function AdminPage() {
     }
   }, [user, userLoading, isAuthenticated]);
 
+  // Efeito adicional para garantir que os dados sejam carregados quando a aba for alterada
+  useEffect(() => {
+    if (activeTab === 'dashboards' && dashboards.length === 0 && !isLoadingDashboards) {
+      fetchDashboardsData();
+    } else if (activeTab === 'users' && users.length === 0 && !isLoadingUsers) {
+      fetchUsersData();
+    } else if (activeTab === 'areas' && areas.length === 0 && !isLoadingAreas) {
+      fetchAreasData();
+    }
+  }, [activeTab]);
+
   const handleDashboardFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!dashboardName || !dashboardUrl || !selectedDashboardAreaId) {
@@ -355,82 +366,330 @@ export default function AdminPage() {
         <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
             <h2 className="text-xl sm:text-2xl font-semibold text-pink-600 dark:text-pink-400">Gerenciamento de Dashboards</h2>
-            <Button onClick={openDashboardFormForNew} size="md" className="w-full sm:w-auto">Adicionar Novo Dashboard</Button>
+            <Button onClick={openDashboardFormForNew} size="md" className="w-full sm:w-auto">
+              Adicionar Novo Dashboard
+            </Button>
           </div>
+
           {showDashboardForm && (
-            <form onSubmit={handleDashboardFormSubmit} className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-md space-y-4">
-              <h3 className="text-lg sm:text-xl mb-3 font-medium dark:text-white">{editingDashboard ? 'Editar' : 'Adicionar'} Dashboard</h3>
-              <div>
-                <label htmlFor="dashboardName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
-                <Input type="text" id="dashboardName" value={dashboardName} onChange={(e) => setDashboardName(e.target.value)} required />
-              </div>
-              <div>
-                <label htmlFor="dashboardUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL (Power BI)</label>
-                <Input type="url" id="dashboardUrl" value={dashboardUrl} onChange={(e) => setDashboardUrl(e.target.value)} required />
-              </div>
-              <div>
-                <label htmlFor="dashboardInformation" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Informação</label>
-                <Textarea 
-                  id="dashboardInformation" 
-                  value={dashboardInformation} 
-                  onChange={(e) => setDashboardInformation(e.target.value)} 
-                  rows={4}
-                  placeholder="Descreva informações sobre este dashboard que serão exibidas ao passar o mouse sobre o ícone de informação"
-                />
-              </div>
-              <div>
-                <label htmlFor="selectedDashboardAreaId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Área</label>
-                {isLoadingAreas ? <p className="dark:text-gray-300">Carregando áreas...</p> : areas.length === 0 ? <p className="dark:text-gray-300">Nenhuma área cadastrada.</p> : (
-                  <Select id="selectedDashboardAreaId" value={selectedDashboardAreaId} onChange={(e) => setSelectedDashboardAreaId(e.target.value)} required>
-                    {areas.map(area => <option key={area.id} value={area.id}>{area.name}</option>)}
+            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-white">
+                {editingDashboard ? 'Editar Dashboard' : 'Adicionar Novo Dashboard'}
+              </h3>
+              <form onSubmit={handleDashboardFormSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="dashboardName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Nome do Dashboard
+                  </label>
+                  <Input
+                    id="dashboardName"
+                    type="text"
+                    value={dashboardName}
+                    onChange={(e) => setDashboardName(e.target.value)}
+                    placeholder="Nome do Dashboard"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="dashboardUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    URL do Dashboard
+                  </label>
+                  <Input
+                    id="dashboardUrl"
+                    type="url"
+                    value={dashboardUrl}
+                    onChange={(e) => setDashboardUrl(e.target.value)}
+                    placeholder="https://app.powerbi.com/..."
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="dashboardInformation" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Informação
+                  </label>
+                  <Textarea
+                    id="dashboardInformation"
+                    value={dashboardInformation}
+                    onChange={(e) => setDashboardInformation(e.target.value)}
+                    placeholder="Informações sobre o dashboard"
+                    rows={4}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="dashboardArea" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Área
+                  </label>
+                  <Select
+                    id="dashboardArea"
+                    value={selectedDashboardAreaId}
+                    onChange={(e) => setSelectedDashboardAreaId(e.target.value)}
+                    required
+                  >
+                    <option value="">Selecione uma área</option>
+                    {areas.map((area) => (
+                      <option key={area.id} value={area.id.toString()}>
+                        {area.name}
+                      </option>
+                    ))}
                   </Select>
-                )}
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                <Button type="submit" size="md" className="w-full sm:w-auto">{editingDashboard ? 'Salvar Alterações' : 'Adicionar Dashboard'}</Button>
-                <Button type="button" variant="secondary" size="md" onClick={() => { setShowDashboardForm(false); setEditingDashboard(null); }} className="w-full sm:w-auto">Cancelar</Button>
-              </div>
-            </form>
+                </div>
+                <div className="flex justify-end space-x-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setShowDashboardForm(false);
+                      setEditingDashboard(null);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit">
+                    {editingDashboard ? 'Atualizar' : 'Adicionar'}
+                  </Button>
+                </div>
+              </form>
+            </div>
           )}
-          {isLoadingDashboards ? <p className="dark:text-gray-300 text-center py-4">Carregando dashboards...</p> : dashboards.length === 0 && !showDashboardForm ? <p className="dark:text-gray-300 text-center py-4">Nenhum dashboard cadastrado.</p> : (
+
+          {isLoadingDashboards ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600"></div>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">Carregando dashboards...</p>
+            </div>
+          ) : dashboards.length === 0 ? (
+            <div className="text-center py-8 text-gray-600 dark:text-gray-400">
+              Nenhum dashboard encontrado. Adicione um novo dashboard para começar.
+            </div>
+          ) : (
             <div className="overflow-x-auto">
               <Table>
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead>
                   <tr>
                     <Th>ID</Th>
-                    <Th>Nome</Th>
-                    <Th>Área</Th>
-                    <Th className="hidden md:table-cell">URL</Th>
-                    <Th>Informação</Th>
-                    <Th>Ações</Th>
+                    <Th>NOME</Th>
+                    <Th>ÁREA</Th>
+                    <Th>URL</Th>
+                    <Th>INFORMAÇÃO</Th>
+                    <Th>AÇÕES</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {dashboards.map(dash => (
-                    <tr key={dash.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <Td>{dash.id}</Td>
-                      <Td>{dash.name}</Td>
-                      <Td>{areas.find(a => a.id === dash.areaId)?.name || 'N/A'}</Td>
-                      <Td className="hidden md:table-cell">
-                        <a href={dash.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline truncate max-w-xs inline-block" title={dash.url}>
-                          {dash.url}
-                        </a>
+                  {dashboards.map((dashboard) => {
+                    const area = areas.find((a) => a.id === dashboard.areaId);
+                    return (
+                      <tr key={dashboard.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <Td>{dashboard.id}</Td>
+                        <Td>{dashboard.name}</Td>
+                        <Td>{area?.name || 'Área não encontrada'}</Td>
+                        <Td className="max-w-xs truncate">
+                          <a
+                            href={dashboard.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline dark:text-blue-400"
+                          >
+                            {dashboard.url}
+                          </a>
+                        </Td>
+                        <Td>{dashboard.information ? 'Sim' : 'Não'}</Td>
+                        <Td>
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleDashboardEdit(dashboard)}
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDashboardDelete(dashboard.id)}
+                            >
+                              Excluir
+                            </Button>
+                          </div>
+                        </Td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'users' && (
+        <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+            <h2 className="text-xl sm:text-2xl font-semibold text-pink-600 dark:text-pink-400">Gerenciamento de Usuários</h2>
+            <Button onClick={openUserFormForNew} size="md" className="w-full sm:w-auto">
+              Adicionar Novo Usuário
+            </Button>
+          </div>
+
+          {showUserForm && (
+            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-white">
+                {editingUser ? 'Editar Usuário' : 'Adicionar Novo Usuário'}
+              </h3>
+              <form onSubmit={handleUserFormSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="userEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Email
+                  </label>
+                  <Input
+                    id="userEmail"
+                    type="email"
+                    value={userEmail}
+                    onChange={(e) => setUserEmail(e.target.value)}
+                    placeholder="email@exemplo.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="userPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Senha {editingUser && '(deixe em branco para manter a atual)'}
+                  </label>
+                  <Input
+                    id="userPassword"
+                    type="password"
+                    value={userPassword}
+                    onChange={(e) => setUserPassword(e.target.value)}
+                    placeholder={editingUser ? '••••••••' : 'Nova senha'}
+                    required={!editingUser}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="userRole" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Perfil
+                  </label>
+                  <Select
+                    id="userRole"
+                    value={userRole}
+                    onChange={(e) => setUserRole(e.target.value)}
+                    required
+                  >
+                    <option value="User">Usuário</option>
+                    <option value="Admin">Administrador</option>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Áreas de Acesso
+                  </label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">
+                    {areas.length === 0 ? (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma área disponível</p>
+                    ) : (
+                      areas.map((area) => (
+                        <div key={area.id} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`area-${area.id}`}
+                            checked={selectedUserAreaIds.includes(area.id)}
+                            onChange={() => handleAreaSelection(area.id)}
+                            className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor={`area-${area.id}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                            {area.name}
+                          </label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setShowUserForm(false);
+                      setEditingUser(null);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit">
+                    {editingUser ? 'Atualizar' : 'Adicionar'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {isLoadingUsers ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600"></div>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">Carregando usuários...</p>
+            </div>
+          ) : users.length === 0 ? (
+            <div className="text-center py-8 text-gray-600 dark:text-gray-400">
+              Nenhum usuário encontrado. Adicione um novo usuário para começar.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <thead>
+                  <tr>
+                    <Th>ID</Th>
+                    <Th>EMAIL</Th>
+                    <Th>PERFIL</Th>
+                    <Th>ÁREAS DE ACESSO</Th>
+                    <Th>AÇÕES</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <Td>{user.id}</Td>
+                      <Td>{user.email}</Td>
+                      <Td>
+                        <span
+                          className={`px-2 py-1 text-xs rounded-full ${
+                            user.role === 'Admin'
+                              ? 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'
+                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                          }`}
+                        >
+                          {user.role === 'Admin' ? 'Administrador' : 'Usuário'}
+                        </span>
                       </Td>
                       <Td>
-                        {dash.information ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-                            Sim
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                            Não
-                          </span>
-                        )}
+                        <div className="flex flex-wrap gap-1">
+                          {user.areas && user.areas.length > 0 ? (
+                            user.areas.map((area) => (
+                              <span
+                                key={area.id}
+                                className="px-2 py-1 text-xs bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 rounded-full"
+                              >
+                                {area.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-gray-500 dark:text-gray-400 text-sm">Nenhuma área</span>
+                          )}
+                        </div>
                       </Td>
                       <Td>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <Button onClick={() => handleDashboardEdit(dash)} variant="outline" size="sm" className="w-full sm:w-auto">Editar</Button>
-                          <Button onClick={() => handleDashboardDelete(dash.id)} variant="danger" size="sm" className="w-full sm:w-auto">Excluir</Button>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleUserEdit(user)}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => handleUserDelete(user.id)}
+                            disabled={user.id === 1} // Protege o usuário admin inicial
+                          >
+                            Excluir
+                          </Button>
                         </div>
                       </Td>
                     </tr>
@@ -442,15 +701,107 @@ export default function AdminPage() {
         </div>
       )}
 
-      {activeTab === 'users' && (
-        <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg">
-          {/* Conteúdo da aba de usuários */}
-        </div>
-      )}
-
       {activeTab === 'areas' && (
         <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg">
-          {/* Conteúdo da aba de áreas */}
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+            <h2 className="text-xl sm:text-2xl font-semibold text-pink-600 dark:text-pink-400">Gerenciamento de Áreas</h2>
+            <Button onClick={openAreaFormForNew} size="md" className="w-full sm:w-auto">
+              Adicionar Nova Área
+            </Button>
+          </div>
+
+          {showAreaForm && (
+            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-white">
+                {editingArea ? 'Editar Área' : 'Adicionar Nova Área'}
+              </h3>
+              <form onSubmit={handleAreaFormSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="areaName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Nome da Área
+                  </label>
+                  <Input
+                    id="areaName"
+                    type="text"
+                    value={areaName}
+                    onChange={(e) => setAreaName(e.target.value)}
+                    placeholder="Nome da Área"
+                    required
+                  />
+                </div>
+                <div className="flex justify-end space-x-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setShowAreaForm(false);
+                      setEditingArea(null);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit">
+                    {editingArea ? 'Atualizar' : 'Adicionar'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {isLoadingAreas ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600"></div>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">Carregando áreas...</p>
+            </div>
+          ) : areas.length === 0 ? (
+            <div className="text-center py-8 text-gray-600 dark:text-gray-400">
+              Nenhuma área encontrada. Adicione uma nova área para começar.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <thead>
+                  <tr>
+                    <Th>ID</Th>
+                    <Th>NOME</Th>
+                    <Th>DASHBOARDS</Th>
+                    <Th>AÇÕES</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {areas.map((area) => {
+                    const areaDashboards = dashboards.filter(d => d.areaId === area.id);
+                    return (
+                      <tr key={area.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <Td>{area.id}</Td>
+                        <Td>{area.name}</Td>
+                        <Td>{areaDashboards.length}</Td>
+                        <Td>
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleAreaEdit(area)}
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleAreaDelete(area.id)}
+                              disabled={areaDashboards.length > 0} // Desabilita exclusão se houver dashboards vinculados
+                            >
+                              Excluir
+                            </Button>
+                          </div>
+                        </Td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </div>
+          )}
         </div>
       )}
     </div>
