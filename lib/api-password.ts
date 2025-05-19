@@ -1,3 +1,4 @@
+
 // Importações necessárias
 import axios from "axios";
 import apiClient from "./api"; // Importa o cliente API do arquivo principal
