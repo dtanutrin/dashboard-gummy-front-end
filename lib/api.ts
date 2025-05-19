@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Importação da função de atualização de senha
 // Tipos para a API
 export type UserData = {
   id: number;
@@ -176,6 +175,7 @@ export type UserCreatePayload = {
   email: string;
   password?: string; 
   role: string; 
+  name?: string; // Adicionado para permitir atualização do nome
   areaIds?: number[]; // Alterado para areaIds para corresponder ao backend
 };
 
@@ -214,6 +214,19 @@ export const validateToken = async (): Promise<boolean> => {
   }
 };
 
+// Função para atualização de senha do usuário
+export const updateUserPassword = async (userId: number, passwordData: { currentPassword: string; newPassword: string }): Promise<void> => {
+  try {
+    await apiClient.put(`/users/${userId}/password`, passwordData);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || "Erro ao atualizar senha";
+      throw new Error(errorMessage);
+    }
+    throw new Error("Erro desconhecido ao atualizar senha");
+  }
+};
+
 // Funções para recuperação de senha
 export const requestPasswordReset = async (email: string): Promise<void> => {
   try {
@@ -239,7 +252,7 @@ export const resetPassword = async (token: string, newPassword: string): Promise
   }
 };
 
-// Exportando a função de atualização de senha
+// Alias para compatibilidade com código existente
+export const forgotPassword = requestPasswordReset;
 
 export default apiClient;
-
