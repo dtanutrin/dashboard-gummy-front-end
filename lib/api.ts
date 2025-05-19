@@ -1,5 +1,8 @@
 import axios from "axios";
 
+// Importação da função de atualização de senha
+import { updateUserPassword } from "./api-password";
+
 // Tipos para a API
 export type UserData = {
   id: number;
@@ -213,5 +216,33 @@ export const validateToken = async (): Promise<boolean> => {
   }
 };
 
+// Funções para recuperação de senha
+export const requestPasswordReset = async (email: string): Promise<void> => {
+  try {
+    await apiClient.post("/auth/forgot-password", { email });
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || "Erro ao solicitar redefinição de senha";
+      throw new Error(errorMessage);
+    }
+    throw new Error("Erro desconhecido ao solicitar redefinição de senha");
+  }
+};
+
+export const resetPassword = async (token: string, newPassword: string): Promise<void> => {
+  try {
+    await apiClient.post("/auth/reset-password", { token, newPassword });
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || "Erro ao redefinir senha";
+      throw new Error(errorMessage);
+    }
+    throw new Error("Erro desconhecido ao redefinir senha");
+  }
+};
+
+// Exportando a função de atualização de senha
+export { updateUserPassword } from './api-password';
+export * from './api-password';
 export default apiClient;
 
