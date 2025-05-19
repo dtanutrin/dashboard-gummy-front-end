@@ -23,7 +23,7 @@ interface Message {
   text: string;
 }
 
-export default function ProfilePage() {
+export default function UserProfilePage() {
   const { user, refreshUser } = useAuth()
   const router = useRouter()
   
@@ -66,10 +66,11 @@ export default function ProfilePage() {
     try {
       if (!user?.id) throw new Error('ID do usuário não encontrado')
       
+      // Usando asserção de tipo para evitar erro de TypeScript
       await api.updateUser(user.id, {
         name: profileData.name,
-        } as api.UserUpdatePayload);
-
+      } as api.UserUpdatePayload)
+      
       await refreshUser()
       setProfileMessage({ 
         type: 'success', 
@@ -87,59 +88,58 @@ export default function ProfilePage() {
   }
   
   const handlePasswordSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setPasswordMessage({ type: '', text: '' });
-  
-  // Validação de senha
-  if (passwordData.newPassword !== passwordData.confirmPassword) {
-    setPasswordMessage({ 
-      type: 'error', 
-      text: 'As senhas não coincidem. Por favor, verifique e tente novamente.' 
-    });
-    setIsSubmitting(false);
-    return;
-  }
-  
-  if (passwordData.newPassword.length < 6) {
-    setPasswordMessage({ 
-      type: 'error', 
-      text: 'A nova senha deve ter pelo menos 6 caracteres.' 
-    });
-    setIsSubmitting(false);
-    return;
-  }
-  
-  try {
-    if (!user?.id) throw new Error('ID do usuário não encontrado');
+    e.preventDefault()
+    setIsSubmitting(true)
+    setPasswordMessage({ type: '', text: '' })
     
-    // Chamada para API de atualização de senha
-    await api.updateUserPassword(user.id, {
-      currentPassword: passwordData.currentPassword,
-      newPassword: passwordData.newPassword,
-    });
+    // Validação de senha
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordMessage({ 
+        type: 'error', 
+        text: 'As senhas não coincidem. Por favor, verifique e tente novamente.' 
+      })
+      setIsSubmitting(false)
+      return
+    }
     
-    setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    });
+    if (passwordData.newPassword.length < 6) {
+      setPasswordMessage({ 
+        type: 'error', 
+        text: 'A nova senha deve ter pelo menos 6 caracteres.' 
+      })
+      setIsSubmitting(false)
+      return
+    }
     
-    setPasswordMessage({ 
-      type: 'success', 
-      text: 'Senha atualizada com sucesso!' 
-    });
-  } catch (error) {
-    console.error('Erro ao atualizar senha:', error);
-    setPasswordMessage({ 
-      type: 'error', 
-      text: 'Erro ao atualizar a senha. Verifique se a senha atual está correta.' 
-    });
-  } finally {
-    setIsSubmitting(false);
+    try {
+      if (!user?.id) throw new Error('ID do usuário não encontrado')
+      
+      // Chamada para API de atualização de senha
+      await api.updateUserPassword(user.id, {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      })
+      
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      })
+      
+      setPasswordMessage({ 
+        type: 'success', 
+        text: 'Senha atualizada com sucesso!' 
+      })
+    } catch (error) {
+      console.error('Erro ao atualizar senha:', error)
+      setPasswordMessage({ 
+        type: 'error', 
+        text: 'Erro ao atualizar a senha. Verifique se a senha atual está correta.' 
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
-}
-
   
   if (!user) {
     return (
@@ -167,8 +167,8 @@ export default function ProfilePage() {
             <Link href="/dashboard" className="text-gray-500 hover:text-gray-700">
               Dashboard
             </Link>
-            <Link href="/profile" className="text-pink-600 font-medium">
-              Perfil
+            <Link href="/user-profile" className="text-pink-600 font-medium">
+              Meu Perfil
             </Link>
           </nav>
         </div>
@@ -179,7 +179,7 @@ export default function ProfilePage() {
         <div className="md:flex md:items-center md:justify-between mb-8">
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-              Perfil
+              Meu Perfil
             </h1>
           </div>
         </div>
@@ -190,7 +190,7 @@ export default function ProfilePage() {
               Informações do Perfil
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">
-              Atualize suas informações de conta e perfil.
+              Atualize suas informações pessoais.
             </p>
           </div>
           <div className="border-t border-gray-200 px-4 py-5 sm:p-6">

@@ -1,8 +1,6 @@
 import axios from "axios";
 
 // Importação da função de atualização de senha
-import { updateUserPassword } from "./api-password";
-
 // Tipos para a API
 export type UserData = {
   id: number;
@@ -242,7 +240,6 @@ export const resetPassword = async (token: string, newPassword: string): Promise
 };
 
 // Exportando a função de atualização de senha
-export { updateUserPassword } from './api-password';
-export * from './api-password';
+
 export default apiClient;
 
