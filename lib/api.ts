@@ -1,4 +1,8 @@
+// Caminho: dashboard-gummy-front-end/lib/api.ts
 import axios from "axios";
+
+// Função auxiliar para verificar se estamos no navegador
+const isBrowser = () => typeof window !== 'undefined';
 
 // Tipos para a API
 export type UserData = {
@@ -44,7 +48,7 @@ const apiClient = axios.create({
 // Interceptor para adicionar token JWT
 apiClient.interceptors.request.use(
   (config) => {
-    if (typeof window !== "undefined") {
+    if (isBrowser()) {
       const token = localStorage.getItem("authToken");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -60,7 +64,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
-      if (typeof window !== "undefined") {
+      if (isBrowser()) {
         localStorage.removeItem("authToken");
         localStorage.removeItem("user");
       }
@@ -72,7 +76,7 @@ apiClient.interceptors.response.use(
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
   try {
     const response = await apiClient.post<LoginResponse>("/auth/login", { email, password });
-    if (typeof window !== "undefined" && response.data.token) {
+    if (isBrowser() && response.data.token) {
       localStorage.setItem("authToken", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user)); 
     }
@@ -87,7 +91,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 };
 
 export const logout = (): void => {
-  if (typeof window !== "undefined") {
+  if (isBrowser()) {
     localStorage.removeItem("authToken");
     localStorage.removeItem("user");
   }
@@ -96,7 +100,7 @@ export const logout = (): void => {
 export const fetchCurrentUserData = async (): Promise<UserData> => {
   try {
     const response = await apiClient.get<UserData>("/auth/me");
-    if (typeof window !== "undefined" && response.data) {
+    if (isBrowser() && response.data) {
       localStorage.setItem("user", JSON.stringify(response.data));
     }
     return response.data;
@@ -106,7 +110,7 @@ export const fetchCurrentUserData = async (): Promise<UserData> => {
 };
 
 export const getCurrentUserFromStorage = (): UserData | null => {
-  if (typeof window === "undefined") return null;
+  if (!isBrowser()) return null;
   const userString = localStorage.getItem("user");
   try {
     return userString ? JSON.parse(userString) as UserData : null;
