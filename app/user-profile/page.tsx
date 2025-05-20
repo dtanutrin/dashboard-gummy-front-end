@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../auth/hooks'
 import { toast } from 'react-hot-toast'
 import * as api from '../../lib/api'
+import Link from 'next/link'
 
 interface User {
   name?: string;
@@ -75,7 +76,15 @@ export default function UserProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Meu Perfil</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Meu Perfil</h1>
+        <Link
+          href="/"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
+        >
+          Voltar
+        </Link>
+      </div>
       
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
         <form onSubmit={handleUpdateProfile}>
