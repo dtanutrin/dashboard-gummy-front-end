@@ -1,4 +1,4 @@
-// Caminho: dashboard-gummy-front-end/lib/api.ts
+
 import axios from "axios";
 
 // Função auxiliar para verificar se estamos no navegador
@@ -58,6 +58,7 @@ const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Adicionado para resolver problema de CORS
 });
 
 // Interceptor para adicionar token JWT
@@ -241,21 +242,9 @@ export const updateUserProfile = async (userData: ProfileData): Promise<any> => 
       throw new Error('Usuário não autenticado');
     }
     
-    const response = await fetch(`${API_URL}/api/users/profile`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(userData)
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Erro ao atualizar perfil');
-    }
-
-    return await response.json();
+    // Substituído fetch por axios para manter consistência e usar withCredentials
+    const response = await apiClient.put('/users/profile', userData);
+    return response.data;
   } catch (error) {
     console.error('Erro ao atualizar perfil:', error);
     throw error;
