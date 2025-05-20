@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '../auth/hooks'
-import { toast } from 'react-hot-toast'
+import { toast, Toaster } from 'react-hot-toast'
 import * as api from '../../lib/api'
 import Link from 'next/link'
 
@@ -27,6 +27,7 @@ export default function UserProfilePage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     if (user) {
@@ -38,6 +39,10 @@ export default function UserProfilePage() {
   const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
+    // Limpar mensagem de sucesso anterior
+    setSuccessMessage('')
+    
+    // Validar senhas
     if (newPassword && newPassword !== confirmPassword) {
       toast.error('As senhas não coincidem')
       return
@@ -52,19 +57,34 @@ export default function UserProfilePage() {
         newPassword: newPassword || undefined
       }
       
-      await api.updateUserProfile(data)
-      toast.success('Perfil atualizado com sucesso!')
-      
-      // Limpar campos de senha
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
+      // Se apenas o nome foi alterado
+      if (!currentPassword && !newPassword) {
+        await api.updateUserProfile(data)
+        toast.success('Perfil atualizado com sucesso!')
+        setSuccessMessage('Seu perfil foi atualizado com sucesso!')
+      } 
+      // Se a senha também foi alterada
+      else if (currentPassword && newPassword) {
+        await api.updateUserProfile(data)
+        toast.success('Senha alterada com sucesso!')
+        setSuccessMessage('Sua senha foi alterada com sucesso!')
+        
+        // Limpar campos de senha
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+      }
+      // Se apenas um dos campos de senha foi preenchido
+      else {
+        toast.error('Para alterar a senha, preencha tanto a senha atual quanto a nova senha')
+      }
     } catch (error: unknown) {
       if (error instanceof Error) {
         toast.error(error.message)
       } else {
         toast.error('Erro ao atualizar perfil')
       }
+      setSuccessMessage('')
     } finally {
       setIsSubmitting(false)
     }
@@ -76,6 +96,9 @@ export default function UserProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+      {/* Componente Toaster para exibir notificações */}
+      <Toaster position="top-right" />
+      
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Meu Perfil</h1>
         <Link
@@ -85,6 +108,22 @@ export default function UserProfilePage() {
           Voltar
         </Link>
       </div>
+      
+      {/* Mensagem de sucesso */}
+      {successMessage && (
+        <div className="mb-6 rounded-md bg-green-50 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-green-800">{successMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
         <form onSubmit={handleUpdateProfile}>
