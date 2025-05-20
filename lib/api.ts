@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 // Função auxiliar para verificar se estamos no navegador
@@ -25,6 +24,14 @@ export type LoginResponse = {
   token: string;
   user: UserData;
 };
+
+// Interface para resposta de recuperação de senha
+export interface PasswordResetResponse {
+  message: string;
+  token?: string;
+  previewUrl?: string;
+  success?: boolean;
+}
 
 export interface Area {
   id: number;
@@ -291,7 +298,18 @@ export const resetPassword = async (token: string, newPassword: string): Promise
   }
 };
 
-// Alias para compatibilidade com código existente
-export const forgotPassword = requestPasswordReset;
+// Função atualizada para recuperação de senha com retorno de token e previewUrl
+export const forgotPassword = async (email: string): Promise<PasswordResetResponse> => {
+  try {
+    const response = await apiClient.post<PasswordResetResponse>("/auth/forgot-password", { email });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || "Erro ao solicitar redefinição de senha";
+      throw new Error(errorMessage);
+    }
+    throw new Error("Erro desconhecido ao solicitar redefinição de senha");
+  }
+};
 
 export default apiClient;
