@@ -1,3 +1,4 @@
+// Caminho: dashboard-gummy-front-end/components/Header.tsx
 "use client"
 import { useRouter } from "next/navigation"
 import { useAuth } from "../app/auth/hooks"; // Corrigido para useAuth
@@ -45,18 +46,17 @@ export default function Header() {
                 </div>
               )}
               
-              {user.role === "User" && (
-                <div className="mr-4">
-                  <Link href="/user-profile">
-                    <button className="flex items-center justify-center border border-pink-200 text-pink-700 hover:bg-pink-50 hover:text-pink-800 dark:border-pink-800 dark:text-pink-300 dark:hover:bg-pink-900 dark:hover:text-pink-200 p-2 sm:px-3 sm:py-2 rounded-md">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5 sm:hidden">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                      </svg>
-                      <span className="hidden sm:inline sm:ml-2">Meu Perfil</span>
-                    </button>
-                  </Link>
-                </div>
-              )}
+              {/* Botão de perfil para todos os usuários - Modificado para aparecer para todos */}
+              <div className="mr-4">
+                <Link href="/user-profile">
+                  <button className="flex items-center justify-center border border-pink-200 text-pink-700 hover:bg-pink-50 hover:text-pink-800 dark:border-pink-800 dark:text-pink-300 dark:hover:bg-pink-900 dark:hover:text-pink-200 p-2 sm:px-3 sm:py-2 rounded-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5 sm:hidden">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                    <span className="hidden sm:inline sm:ml-2">Usuário</span>
+                  </button>
+                </Link>
+              </div>
 
               <div className="relative">
                 <div className="flex items-center">
@@ -78,4 +78,3 @@ export default function Header() {
     </header>
   )
 }
-

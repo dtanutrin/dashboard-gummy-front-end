@@ -4,6 +4,14 @@ import axios from "axios";
 // Função auxiliar para verificar se estamos no navegador
 const isBrowser = () => typeof window !== 'undefined';
 
+// Função para obter o token JWT do localStorage
+export const getToken = (): string | null => {
+  if (isBrowser()) {
+    return localStorage.getItem("authToken");
+  }
+  return null;
+};
+
 // Tipos para a API
 export type UserData = {
   id: number;
@@ -33,6 +41,13 @@ export interface Dashboard {
   url: string;
   areaId: number;
   information?: string; 
+}
+
+// Interface para dados de perfil do usuário
+export interface ProfileData {
+  name: string;
+  currentPassword?: string;
+  newPassword?: string;
 }
 
 // Configuração base
@@ -218,6 +233,35 @@ export const validateToken = async (): Promise<boolean> => {
   }
 };
 
+// Função para atualizar o perfil do usuário (versão com tipagem TypeScript)
+export const updateUserProfile = async (userData: ProfileData): Promise<any> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('Usuário não autenticado');
+    }
+    
+    const response = await fetch(`${API_URL}/api/users/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(userData)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Erro ao atualizar perfil');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Erro ao atualizar perfil:', error);
+    throw error;
+  }
+};
+
 // Função para atualização de senha do usuário
 export const updateUserPassword = async (userId: number, passwordData: { currentPassword: string; newPassword: string }): Promise<void> => {
   try {
@@ -244,9 +288,11 @@ export const requestPasswordReset = async (email: string): Promise<void> => {
   }
 };
 
-export const resetPassword = async (token: string, newPassword: string): Promise<void> => {
+// Função para redefinir a senha (versão com tipagem TypeScript)
+export const resetPassword = async (token: string, newPassword: string): Promise<any> => {
   try {
-    await apiClient.post("/auth/reset-password", { token, newPassword });
+    const response = await apiClient.post("/auth/reset-password", { token, newPassword });
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || "Erro ao redefinir senha";
