@@ -6,6 +6,8 @@ import { useAuth } from '../auth/hooks'
 import { toast, Toaster } from 'react-hot-toast'
 import * as api from '../../lib/api'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation';
+
 
 interface User {
   name?: string;
@@ -101,12 +103,12 @@ export default function UserProfilePage() {
       
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Meu Perfil</h1>
-        <Link
-          href="/"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
-        >
-          Voltar
-        </Link>
+   <button
+  onClick={() => window.history.back()}
+  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700"
+>
+  Voltar
+</button>
       </div>
       
       {/* Mensagem de sucesso */}
