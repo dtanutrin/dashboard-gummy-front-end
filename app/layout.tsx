@@ -46,7 +46,7 @@ export default function RootLayout({
           </div>
         </ClientAuthProvider>
         <footer className="w-full text-center p-4 text-sm text-pink-700 dark:text-pink-300 border-t border-pink-200 dark:border-gray-700 mt-auto">
-          Gummy Dashboards © 2025
+          Data Team Analytics | Gummy Dashboards © 2025
         </footer>
       </body>
     </html>
