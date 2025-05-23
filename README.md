@@ -36,4 +36,4 @@ Para uma lista completa de todas as dependências e bibliotecas utilizadas no pr
 Para facilitar o acesso a recursos relacionados e ao ambiente de produção, seguem os links relevantes:
 
 *   **Repositório Backend:** O código-fonte e a documentação do sistema de backend que suporta esta aplicação podem ser encontrados em: [dashboard-gummy-back-end](https://github.com/dtanutrin/dashboard-gummy-back-end)
-*   **Aplicação em Produção (Frontend):** A versão funcional e publicamente acessível do Gummy Dashboards está disponível em: [dashboardgummy.netlify.app](https://dashboardgummy.netlify.app/)
+*   **Aplicação em Produção (Frontend):** A versão funcional e publicamente acessível do Gummy Dashboards está disponível em: [dta-gummy](https://dta-gummy.netlify.app/auth/login)
