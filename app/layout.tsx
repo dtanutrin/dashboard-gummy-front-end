@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Gummy Dashboards",
+  title: "D.TA - Relatórios e Dashboards",
   description: "Visualização de relatórios Power BI da Gummy Original",
   generator: 'b3rnardo_15',
   icons: { // Adicionando a forma recomendada para favicon em Next.js 13+

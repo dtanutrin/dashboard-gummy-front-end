@@ -1,4 +1,4 @@
-# Gummy Dashboards - Frontend
+# D.TA - Relatórios e Dashboards - Frontend
 
 <p align="center">
  <img src="https://raw.githubusercontent.com/dtanutrin/dashboard-gummy-front-end/main/public/images/v2_marca_dta_gummy.png" alt="DTA Gummy Logo" width="200"/>
