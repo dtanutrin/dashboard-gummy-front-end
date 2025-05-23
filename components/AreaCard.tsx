@@ -4,11 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { Area as ApiArea } from "../lib/api";
 
-// Interface atualizada para incluir iconFilename
 interface FrontendArea extends ApiArea {
   slug: string;
   color: string;
-  iconFilename: string; // Garanta que este campo seja passado de page.tsx
+  iconFilename: string;
   description: string;
 }
 
@@ -19,51 +18,43 @@ interface AreaCardProps {
 
 const AreaCard = ({ area }: AreaCardProps) => {
   const areaLinkSlug = area.slug || area.name.toLowerCase().replace(/\s+/g, "-");
-  
-  // Caminho do ícone dinâmico com fallback para o genérico
-  const iconPath = area.iconFilename ? `/images/${area.iconFilename}` : '/images/generico-icone.png'; 
+  const iconPath = area.iconFilename ? `/images/${area.iconFilename}` : '/images/logo.b2b.png';
 
   return (
-    // Container principal do card
+    // Container principal do card, mantendo h-full para grid layout
     <div className="opacity-100 transform translate-y-0 transition-all duration-300 delay-100 flex flex-col h-full">
-      {/* Div interna do card - Layout base é flex-col (mobile), muda para flex-row no desktop (md:) */}
-      {/* Removido min-h para deixar a altura ser definida pelo conteúdo, como no mobile, mas pode ser necessário adicionar de volta se o grid não alinhar */}
+      {/* Div interna do card, aplicando layout flex e altura mínima */}
       <div
-        className={`flex-grow overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 rounded-lg flex flex-col md:flex-row items-stretch`}
+        // Layout base: flex-row (horizontal), items-stretch (igualar altura interna), min-h (altura uniforme)
+        className={`flex-grow overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 rounded-lg flex flex-row items-stretch min-h-[200px]`}
         style={{
           backgroundColor: area.color,
           borderRadius: "12px",
           border: "none",
         }}
       >
-        {/* Container do Ícone - Ajustado para ter proporção mais consistente */}
-        {/* No mobile (flex-col), ocupa a parte de cima. No desktop (flex-row), ocupa a esquerda */}
-        {/* Usar padding e talvez um aspect-ratio no container interno da imagem pode ajudar */}
-        <div className="p-4 flex items-center justify-center md:w-1/3 flex-shrink-0">
-          {/* Container interno para controlar tamanho/aspecto da imagem se necessário */}
-          <div className="relative w-20 h-20"> {/* Tamanho fixo para o container da imagem */} 
-            <Image 
-              src={iconPath}
-              alt={`Ícone ${area.name}`}
-              fill // Usa fill para preencher o container pai (w-20 h-20)
-              className="object-contain" // Garante que a imagem caiba sem distorcer
-              onError={(e) => { e.currentTarget.src = '/images/generico-icone.png'; }} 
-            />
-          </div>
+        {/* Container do Ícone (Esquerda) - Mantém largura fixa e centraliza o ícone */}
+        <div className="p-4 md:p-6 flex items-center justify-center w-1/3 flex-shrink-0">
+          <Image 
+            src={iconPath}
+            alt={`Ícone ${area.name}`}
+            width={80} 
+            height={80} 
+            className="object-contain" 
+            onError={(e) => { e.currentTarget.src = '/images/logo.b2b.png'; }}
+          />
         </div>
 
-        {/* Container do Conteúdo - Ocupa o restante do espaço */}
-        {/* No mobile (flex-col), fica abaixo do ícone. No desktop (flex-row), fica à direita */}
-        {/* Usar flex-grow para ocupar espaço e flex-col para organizar texto/botão internamente */}
-        <div className="p-4 flex flex-col text-white flex-grow md:w-2/3 justify-between">
+        {/* Container do Conteúdo (Direita) - Ajustes específicos para desktop (md:) */}
+        {/* Layout base: flex-col. Desktop (md:): justify-between para alinhar título/descrição no topo e botão no fundo */}
+        <div className="p-4 md:p-6 flex flex-col text-white flex-grow w-2/3 md:justify-between">
           {/* Agrupador para Título e Descrição */}
           <div> 
             <h2 className="text-xl md:text-2xl font-bold mb-1 md:mb-2">{area.name}</h2>
-            {/* Adicionado min-h para descrição garantir espaço mínimo, ajuste se necessário */}
-            <p className="opacity-80 text-xs md:text-sm mb-4 min-h-[3em]">{area.description}</p> 
+            <p className="opacity-80 text-xs md:text-sm mb-4">{area.description}</p>
           </div>
           
-          {/* Container do Botão - Empurrado para baixo com justify-between no container pai */}
+          {/* Container do Botão - mt-auto no mobile para empurrar para baixo, removido no desktop pois justify-between cuida disso */}
           <div className="mt-auto md:mt-0 w-full pt-2 md:pt-0">
             <Link href={`/dashboard/${encodeURIComponent(area.name)}`}>
                 <button
