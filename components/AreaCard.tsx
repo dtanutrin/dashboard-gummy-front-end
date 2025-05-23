@@ -5,10 +5,11 @@ import Image from "next/image"; // Importar o componente Image do Next.js
 import { Area as ApiArea } from "../lib/api"; // Importando tipos da API
 
 // Interface para Área no frontend, estendendo a da API
+// Adicionamos 'iconFilename' para carregar o ícone dinamicamente
 interface FrontendArea extends ApiArea {
   slug: string;
   color: string;
-  // icon: string; // O ícone agora é padrão, remover ou comentar
+  iconFilename: string; // Nome do arquivo do ícone (ex: 'b2b-icon.png')
   description: string;
 }
 
@@ -20,10 +21,14 @@ interface AreaCardProps {
 const AreaCard = ({ area }: AreaCardProps) => {
   const areaLinkSlug = area.slug || area.name.toLowerCase().replace(/\s+/g, "-");
 
+
+  // As imagens devem estar em /public/images/
+  const iconPath = area.iconFilename ? `/images/${area.iconFilename}` : '/images/logo.b2b.png'; // Fallback para o logo padrão se não houver nome de arquivo
+
   return (
     <div className="opacity-100 transform translate-y-0 transition-all duration-300 delay-100 flex flex-col h-full">
       <div
-        className={`flex-grow overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 rounded-lg flex flex-row items-stretch`}
+        className={`flex-grow overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 rounded-lg flex flex-row items-stretch min-h-[200px]`}
         style={{
           backgroundColor: area.color,
           borderRadius: "12px",
@@ -33,11 +38,12 @@ const AreaCard = ({ area }: AreaCardProps) => {
         {/* Container do Ícone (Esquerda) */}
         <div className="p-4 md:p-6 flex items-center justify-center w-1/3 flex-shrink-0">
           <Image 
-            src="/images/logo.b2b.png" // Caminho para o ícone padrão
-            alt={`Ícone ${area.name}`} // Alt text dinâmico ou padrão
-            width={80} // Largura do ícone (ajustar conforme necessário)
-            height={80} // Altura do ícone (ajustar conforme necessário)
-            className="object-contain" // Garante que a imagem se ajuste sem distorcer
+            src={iconPath} // Usa o caminho dinâmico do ícone
+            alt={`Ícone ${area.name}`}
+            width={80} 
+            height={80} 
+            className="object-contain" 
+            onError={(e) => { e.currentTarget.src = '/images/logo.b2b.png'; }} // Fallback em caso de erro ao carregar a imagem
           />
         </div>
 
