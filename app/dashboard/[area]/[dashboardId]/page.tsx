@@ -160,8 +160,9 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
             </h1>
           </div>
           <div
-              className="text-pink-600 hover:text-pink-800 dark:text-pink-400 dark:hover:text-pink-300 mr-4 transition-colors"   
-              >
+            className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden transition-all hover:shadow-lg flex flex-col flex-grow relative"
+            style={{ borderTop: `5px solid ${areaColor}` }} // Mantém a borda superior com a cor da área
+          >
             <PowerBIEmbed 
               reportId={dashboard.url} 
               title={dashboard.name}
