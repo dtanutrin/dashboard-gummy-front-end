@@ -162,7 +162,7 @@ export default function DashboardPage() {
 
         {displayedAreas.length > 0 ? (
           //  Grid responsivo: 1 coluna mobile, 2 medium, 3 large.
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {displayedAreas.map((area, index) => (
               <AreaCard key={area.id} area={area} index={index} />
             ))}
