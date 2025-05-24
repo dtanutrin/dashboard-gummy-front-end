@@ -7,27 +7,28 @@ import { useAuth } from "../../../app/auth/hooks";
 import Header from "../../../components/Header";
 import DashboardCard from "../../../components/DashboardCard"; // Novo componente
 import { getAllAreas, Area as ApiArea, Dashboard as ApiDashboard } from "../../../lib/api"; // Corrigido: getAllAreas importado diretamente
-import { decodeUrlParam } from "../../../lib/utils";
+import { decodeUrlParam, getIconFilename } from "../../../lib/utils"; // Importando getIconFilename
 import Image from "next/image";
 
 // Cores por área (pode ser movido para um config ou vir da API de Areas futuramente)
-const areaVisuals: { [key: string]: { color: string; icon: string; description: string } } = {
-  default: { color: "#607d8b", icon: "📁", description: "Dashboards gerais" },
-  b2b: { color: "#607d8b", icon: "📈", description: "Vendas e Desempenho B2B" },
-  "comercial interno": { color: "#f48fb1", icon: "💼", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial;" },
-  compras: { color: "#795548", icon: "🛒", description: "Acompanhamento financeiro da Equipe de Compras;" },
-  "cs/monitoramento": { color: "#ff80ab", icon: "🎯", description: "Dashboard de acompanhamento dos canais de atendimento e suporte ao Cliente;" },
-  influencer: { color: "#9c27b0", icon: "⭐", description: "Relatórios que apresentam os dados de desempenho dos influenciadores;" },
-  logística: { color: "#e91e63", icon: "🚚", description: "Gestão de estoque e indicadores Logísticos;" },
-  "operações e controle": { color: "#c2185b", icon: "⚙️", description: "Processos organizacionais e operacionais" },
-  "performance e vendas": { color: "#4caf50", icon: "💹", description: "Relatórios de vendas, Aquisição de mídia e influencer, pedidos e acompanhamento de metas em geral." },
-  retenção: { color: "#00bcd4", icon: "🔄", description: "Relatórios com Foco em dados de Clientes;" },
-  rh: { color: "#ff9800", icon: "👥", description: "Relatórios voltados para a Gestão de Pessoas;" },
+// REMOVIDO: visual.icon não será mais usado aqui para o título
+const areaVisuals: { [key: string]: { color: string; description: string } } = {
+  default: { color: "#607d8b", description: "Dashboards gerais" },
+  b2b: { color: "#607d8b", description: "Vendas e Desempenho B2B" },
+  "comercial interno": { color: "#f48fb1", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial;" },
+  compras: { color: "#795548", description: "Acompanhamento financeiro da Equipe de Compras;" },
+  "cs/monitoramento": { color: "#ff80ab", description: "Dashboard de acompanhamento dos canais de atendimento e suporte ao Cliente;" },
+  influencer: { color: "#9c27b0", description: "Relatórios que apresentam os dados de desempenho dos influenciadores;" },
+  logística: { color: "#e91e63", description: "Gestão de estoque e indicadores Logísticos;" },
+  "operações e controle": { color: "#c2185b", description: "Processos organizacionais e operacionais" },
+  "performance e vendas": { color: "#4caf50", description: "Relatórios de vendas, Aquisição de mídia e influencer, pedidos e acompanhamento de metas em geral." },
+  retenção: { color: "#00bcd4", description: "Relatórios com Foco em dados de Clientes;" },
+  rh: { color: "#ff9800", description: "Relatórios voltados para a Gestão de Pessoas;" },
   // Mantendo os antigos para referência caso o nome da área não bata com os novos
-  marketing: { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" }, 
-  operações: { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" }, 
-  cs: { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, 
-  comercial: { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
+  marketing: { color: "#ff4081", description: "Campanhas e análise de mercado" }, 
+  operações: { color: "#c2185b", description: "Processos e produtividade" }, 
+  cs: { color: "#ff80ab", description: "Atendimento ao cliente" }, 
+  comercial: { color: "#f48fb1", description: "Vendas e negociações" },
 };
 
 export default function AreaDashboardsPage({ params: paramsPromise }: { params: Promise<{ area: string }> }) {
@@ -42,9 +43,15 @@ export default function AreaDashboardsPage({ params: paramsPromise }: { params: 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Visuals são usados apenas para descrição agora
   const visual = areaVisuals[decodedAreaSlug.toLowerCase()] || areaVisuals.default;
-  const areaColor = visual.color;
+  // const areaColor = visual.color; // Não usamos mais a cor dinâmica para o título
   const areaDisplayName = decodedAreaSlug.charAt(0).toUpperCase() + decodedAreaSlug.slice(1);
+
+  // Definindo o nome do arquivo do ícone e fallback
+  const iconFilename = areaData ? getIconFilename(areaData.name) : getIconFilename("default");
+  const iconPath = `/images/${iconFilename}`;
+  const fallbackIconPath = '/images/generico-icone.png';
 
   useEffect(() => {
     if (!userLoading && !isAuthenticated) {
@@ -153,9 +160,22 @@ export default function AreaDashboardsPage({ params: paramsPromise }: { params: 
           <Link href="/dashboard" className="text-pink-600 hover:text-pink-800 dark:text-pink-400 dark:hover:text-pink-300 transition-colors">
             ← Voltar para todas as áreas
           </Link>
-          <h1 className="text-3xl font-bold mt-2 mb-3" style={{ color: areaColor }}>
-            {visual.icon} {areaData.name}
-          </h1>
+          {/* AJUSTE TÍTULO: Adicionado container flex, quadrado rosa com ícone, e cor rosa fixa */}
+          <div className="flex items-center mt-2 mb-3">
+            <div className="bg-pink-500 rounded p-1 mr-3 inline-flex items-center justify-center w-8 h-8"> {/* Quadrado rosa */}
+              <Image
+                src={iconPath}
+                alt={`Ícone ${areaData.name}`}
+                width={24} // Tamanho do ícone dentro do quadrado
+                height={24}
+                className="object-contain filter brightness-0 invert" // Inverte a cor para branco
+                onError={(e) => { e.currentTarget.src = fallbackIconPath; }}
+              />
+            </div>
+            <h1 className="text-3xl font-bold text-pink-600 dark:text-pink-400">
+              {areaData.name}
+            </h1>
+          </div>
           <p className="text-gray-600 dark:text-gray-300 max-w-2xl">
             {visual.description}
           </p>
@@ -168,7 +188,9 @@ export default function AreaDashboardsPage({ params: paramsPromise }: { params: 
                 key={dashboard.id} 
                 dashboard={dashboard} 
                 areaSlug={decodedAreaSlug} 
-                areaColor={areaColor} 
+                // Passando a cor rosa padrão para os cards de dashboard, se necessário
+                // Se DashboardCard não usa areaColor, pode remover
+                areaColor={"#ff4081"} 
               />
             ))}
           </div>
