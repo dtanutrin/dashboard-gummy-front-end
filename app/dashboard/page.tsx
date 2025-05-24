@@ -152,7 +152,7 @@ export default function DashboardPage() {
     <div className="bg-gradient-to-br from-pink-50 to-pink-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-white">
       <Header />
       <main className="flex-grow max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 w-full">
-        <div className="mb-8 text-center pt-8"> {/* Aumentado padding-top e removido logo */}
+        <div className="mb-8 text-center pt-8"> 
           <h1 className="text-3xl font-bold text-pink-600 dark:text-pink-400 mb-2">Relatórios e Dashboards</h1>
           <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Selecione uma área para visualizar os dashboards de Power BI específicos e acompanhar os indicadores de
