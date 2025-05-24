@@ -9,8 +9,7 @@ import { decodeUrlParam } from "../../../../lib/utils";
 import { getDashboardById, Dashboard as ApiDashboard } from "../../../../lib/api";
 import Image from "next/image";
 
-// Objeto areaVisuals ainda pode ser usado para a borda superior ou outros elementos se necessário,
-// mas não mais para a cor do título h1.
+// Objeto areaVisuals não é mais necessário para cores, mas pode ser mantido para ícones/descrições futuras.
 const areaVisuals: { [key: string]: { color: string; icon: string; description: string } } = {
   default: { color: "#607d8b", icon: "📁", description: "Dashboards gerais" },
   "b2b": { color: "#607d8b", icon: "📈", description: "Vendas e Desempenho B2B" },
@@ -32,7 +31,7 @@ const areaVisuals: { [key: string]: { color: string; icon: string; description: 
 export default function ViewDashboardPage({ params: paramsPromise }: { params: Promise<{ area: string; dashboardId: string }> }) {
   const params = use(paramsPromise);
 
-  const decodedAreaSlug = decodeUrlParam(params?.area || "");
+  const decodedAreaSlug = decodeUrlParam(params?.area || ""); 
   const dashboardId = Number.parseInt(params?.dashboardId || '0');
   
   const areaDisplayName = decodedAreaSlug
@@ -40,9 +39,8 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join('/');
     
-  // A cor da área ainda é necessária para a borda superior
-  const visual = areaVisuals[decodedAreaSlug.toLowerCase()] || areaVisuals.default;
-  const areaColor = visual.color; 
+  // Cor rosa fixa para a borda
+  const fixedPinkBorderColor = "#db2777"; // Cor correspondente a text-pink-600
 
   const { user, loading: userLoading, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -154,14 +152,14 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
             >
               ← Voltar para {areaDisplayName}
             </Link>
-            {/* AJUSTE: Removido style inline e adicionado classes de texto rosa */}
             <h1 className="text-2xl font-semibold text-pink-600 dark:text-pink-400">
               {dashboard.name}
             </h1>
           </div>
+          {/* AJUSTE: Borda superior agora usa cor rosa fixa */}
           <div
             className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden transition-all hover:shadow-lg flex flex-col flex-grow relative"
-            style={{ borderTop: `5px solid ${areaColor}` }} // Mantém a borda superior com a cor da área
+            style={{ borderTop: `5px solid ${fixedPinkBorderColor}` }} 
           >
             <PowerBIEmbed 
               reportId={dashboard.url} 
