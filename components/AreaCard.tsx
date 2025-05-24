@@ -23,7 +23,7 @@ const getIconFilename = (areaName: string): string => {
                                 .replace(/[^a-z0-9\s]/g, ''); // Remove special chars except space
 
   // Map keywords to icon files - Adjust keywords as needed
-  if (normalizedName.includes('b2b')) return 'b2b-icone.png';
+  if (normalizedName.includes('b2b')) return 'logo.b2b.png';
   if (normalizedName.includes('compras')) return 'compras-icone.png';
   if (normalizedName.includes('cs') || normalizedName.includes('monitoramento')) return 'cs-icone.png';
   if (normalizedName.includes('influenciador') || normalizedName.includes('influencer')) return 'influenciador-icone.png';
