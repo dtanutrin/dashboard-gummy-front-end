@@ -9,24 +9,23 @@ import { decodeUrlParam } from "../../../../lib/utils";
 import { getDashboardById, Dashboard as ApiDashboard } from "../../../../lib/api";
 import Image from "next/image";
 
-const areaVisuals: { [key: string]: { color: string; icon: string; description: string } } = {
-  default: { color: "#607d8b", icon: "📁", description: "Dashboards gerais" },
-  // Usando chaves minúsculas e normalizadas para consistência com decodedAreaSlug
-  "b2b": { color: "#607d8b", icon: "📈", description: "Vendas e Desempenho B2B" },
-  "comercial interno": { color: "#f48fb1", icon: "💼", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial;" },
-  "compras": { color: "#795548", icon: "🛒", description: "Acompanhamento financeiro da Equipe de Compras;" },
-  "cs/monitoramento": { color: "#ff80ab", icon: "🎯", description: "Dashboard de acompanhamento dos canais de atendimento e suporte ao Cliente;" },
-  "influencer": { color: "#9c27b0", icon: "⭐", description: "Relatórios que apresentam os dados de desempenho dos influenciadores;" },
-  "logística": { color: "#e91e63", icon: "🚚", description: "Gestão de estoque e indicadores Logísticos;" },
-  "operações e controle": { color: "#c2185b", icon: "⚙️", description: "Processos organizacionais e operacionais" },
-  "performance e vendas": { color: "#4caf50", icon: "💹", description: "Relatórios de vendas, Aquisição de mídia e influencer, pedidos e acompanhamento de metas em geral." },
-  "retenção": { color: "#00bcd4", icon: "🔄", description: "Relatórios com Foco em dados de Clientes;" },
-  "rh": { color: "#ff9800", icon: "👥", description: "Relatórios voltados para a Gestão de Pessoas;" },
+const areaVisuals: { [key: string]: { color: string; description: string } } = {
+  default: { color: "#607d8b", description: "Dashboards gerais" },
+  b2b: { color: "#607d8b", description: "Vendas e Desempenho B2B" },
+  "comercial interno": { color: "#f48fb1", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial;" },
+  compras: { color: "#795548", description: "Acompanhamento financeiro da Equipe de Compras;" },
+  "cs/monitoramento": { color: "#ff80ab", description: "Dashboard de acompanhamento dos canais de atendimento e suporte ao Cliente;" },
+  influencer: { color: "#9c27b0", description: "Relatórios que apresentam os dados de desempenho dos influenciadores;" },
+  logística: { color: "#e91e63", description: "Gestão de estoque e indicadores Logísticos;" },
+  "operações e controle": { color: "#c2185b", description: "Processos organizacionais e operacionais" },
+  "performance e vendas": { color: "#4caf50", description: "Relatórios de vendas, Aquisição de mídia e influencer, pedidos e acompanhamento de metas em geral." },
+  retenção: { color: "#00bcd4", description: "Relatórios com Foco em dados de Clientes;" },
+  rh: { color: "#ff9800", description: "Relatórios voltados para a Gestão de Pessoas;" },
   // Mantendo os antigos para referência caso o nome da área não bata com os novos
-  "marketing": { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" }, 
-  "operações": { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" }, 
-  "cs": { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, 
-  "comercial": { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
+  marketing: { color: "#ff4081", description: "Campanhas e análise de mercado" }, 
+  operações: { color: "#c2185b", description: "Processos e produtividade" }, 
+  cs: { color: "#ff80ab", description: "Atendimento ao cliente" }, 
+  comercial: { color: "#f48fb1", description: "Vendas e negociações" },
 };
 
 export default function ViewDashboardPage({ params: paramsPromise }: { params: Promise<{ area: string; dashboardId: string }> }) {
