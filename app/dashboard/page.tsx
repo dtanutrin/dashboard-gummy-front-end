@@ -161,7 +161,8 @@ export default function DashboardPage() {
         </div>
 
         {displayedAreas.length > 0 ? (
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          // AJUSTE AQUI: Removido sm:grid-cols-2, lg:grid-cols-3, xl:grid-cols-5. Agora é sempre 1 coluna.
+          <div className="grid grid-cols-1 gap-8">
             {displayedAreas.map((area, index) => (
               <AreaCard key={area.id} area={area} index={index} />
             ))}
