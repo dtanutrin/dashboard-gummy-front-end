@@ -9,40 +9,40 @@ import { decodeUrlParam } from "../../../../lib/utils";
 import { getDashboardById, Dashboard as ApiDashboard } from "../../../../lib/api";
 import Image from "next/image";
 
-const areaVisuals: { [key: string]: { color: string; description: string } } = {
-  default: { color: "#607d8b", description: "Dashboards gerais" },
-  b2b: { color: "#607d8b", description: "Vendas e Desempenho B2B" },
-  "comercial interno": { color: "#f48fb1", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial;" },
-  compras: { color: "#795548", description: "Acompanhamento financeiro da Equipe de Compras;" },
-  "cs/monitoramento": { color: "#ff80ab", description: "Dashboard de acompanhamento dos canais de atendimento e suporte ao Cliente;" },
-  influencer: { color: "#9c27b0", description: "Relatórios que apresentam os dados de desempenho dos influenciadores;" },
-  logística: { color: "#e91e63", description: "Gestão de estoque e indicadores Logísticos;" },
-  "operações e controle": { color: "#c2185b", description: "Processos organizacionais e operacionais" },
-  "performance e vendas": { color: "#4caf50", description: "Relatórios de vendas, Aquisição de mídia e influencer, pedidos e acompanhamento de metas em geral." },
-  retenção: { color: "#00bcd4", description: "Relatórios com Foco em dados de Clientes;" },
-  rh: { color: "#ff9800", description: "Relatórios voltados para a Gestão de Pessoas;" },
-  // Mantendo os antigos para referência caso o nome da área não bata com os novos
-  marketing: { color: "#ff4081", description: "Campanhas e análise de mercado" }, 
-  operações: { color: "#c2185b", description: "Processos e produtividade" }, 
-  cs: { color: "#ff80ab", description: "Atendimento ao cliente" }, 
-  comercial: { color: "#f48fb1", description: "Vendas e negociações" },
+// Objeto areaVisuals ainda pode ser usado para a borda superior ou outros elementos se necessário,
+// mas não mais para a cor do título h1.
+const areaVisuals: { [key: string]: { color: string; icon: string; description: string } } = {
+  default: { color: "#607d8b", icon: "📁", description: "Dashboards gerais" },
+  "b2b": { color: "#607d8b", icon: "📈", description: "Vendas e Desempenho B2B" },
+  "comercial interno": { color: "#f48fb1", icon: "💼", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial;" },
+  "compras": { color: "#795548", icon: "🛒", description: "Acompanhamento financeiro da Equipe de Compras;" },
+  "cs/monitoramento": { color: "#ff80ab", icon: "🎯", description: "Dashboard de acompanhamento dos canais de atendimento e suporte ao Cliente;" },
+  "influencer": { color: "#9c27b0", icon: "⭐", description: "Relatórios que apresentam os dados de desempenho dos influenciadores;" },
+  "logística": { color: "#e91e63", icon: "🚚", description: "Gestão de estoque e indicadores Logísticos;" },
+  "operações e controle": { color: "#c2185b", icon: "⚙️", description: "Processos organizacionais e operacionais" },
+  "performance e vendas": { color: "#4caf50", icon: "💹", description: "Relatórios de vendas, Aquisição de mídia e influencer, pedidos e acompanhamento de metas em geral." },
+  "retenção": { color: "#00bcd4", icon: "🔄", description: "Relatórios com Foco em dados de Clientes;" },
+  "rh": { color: "#ff9800", icon: "👥", description: "Relatórios voltados para a Gestão de Pessoas;" },
+  "marketing": { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" }, 
+  "operações": { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" }, 
+  "cs": { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, 
+  "comercial": { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
 };
 
 export default function ViewDashboardPage({ params: paramsPromise }: { params: Promise<{ area: string; dashboardId: string }> }) {
   const params = use(paramsPromise);
 
-  // decodedAreaSlug já deve ser o nome da área decodificado e em minúsculas (ex: "cs/monitoramento")
-  const decodedAreaSlug = decodeUrlParam(params?.area || ''); 
+  const decodedAreaSlug = decodeUrlParam(params?.area || "");
   const dashboardId = Number.parseInt(params?.dashboardId || '0');
   
-  // Para exibição, capitalizamos o nome da área
   const areaDisplayName = decodedAreaSlug
     .split('/')
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join('/');
     
+  // A cor da área ainda é necessária para a borda superior
   const visual = areaVisuals[decodedAreaSlug.toLowerCase()] || areaVisuals.default;
-  const areaColor = visual.color;
+  const areaColor = visual.color; 
 
   const { user, loading: userLoading, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -63,19 +63,12 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
         return;
       }
 
-      // CORREÇÃO 1: Lógica de verificação de acesso à área
-      // Assume que decodedAreaSlug é o nome da área já decodificado e em minúsculas.
-      // Assume que user.areas contém objetos com uma propriedade 'name'.
       const userHasAreaAccess = 
         user.role?.toLowerCase() === 'admin' || 
         user.areas?.some(area => area.name.toLowerCase() === decodedAreaSlug.toLowerCase());
       
       if (!userHasAreaAccess && !userLoading) {
-        // Se não tem acesso, redireciona para a página principal de dashboards
-        // Isso pode causar um loop se a lógica de acesso na página /dashboard também o redirecionar de volta aqui.
-        // É crucial que a lógica de permissão seja consistente em todas as páginas.
-        setError("Acesso negado a esta área ou dashboard."); // Informa o usuário
-        // router.push("/dashboard"); // Comentar o redirecionamento para evitar loop e mostrar o erro.
+        setError("Acesso negado a esta área ou dashboard.");
         setIsLoadingDashboard(false);
         return;
       }
@@ -85,10 +78,6 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
         setError(null);
         try {
           const fetchedDashboard = await getDashboardById(dashboardId);
-          // Adicionalmente, verificar se o dashboard pertence à área esperada (decodedAreaSlug)
-          // Esta verificação depende de como a API getDashboardById e o objeto fetchedDashboard são estruturados.
-          // Se fetchedDashboard tiver uma propriedade como areaName ou areaId, podemos validar.
-          // Exemplo: if (fetchedDashboard.areaName.toLowerCase() !== decodedAreaSlug.toLowerCase()) { throw new Error("Dashboard não pertence a esta área.")}
           setDashboard(fetchedDashboard);
         } catch (err) {
           console.error("Erro ao buscar dashboard:", err);
@@ -122,7 +111,6 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
     );
   }
 
-  // CORREÇÃO 2: Codificar o decodedAreaSlug para os links de "Voltar"
   const encodedAreaForLink = encodeURIComponent(decodedAreaSlug);
 
   if (error) {
@@ -166,13 +154,14 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
             >
               ← Voltar para {areaDisplayName}
             </Link>
-            <h1 className="text-2xl font-semibold dark:text-white" style={{ color: areaColor }}>
+            {/* AJUSTE: Removido style inline e adicionado classes de texto rosa */}
+            <h1 className="text-2xl font-semibold text-pink-600 dark:text-pink-400">
               {dashboard.name}
             </h1>
           </div>
           <div
             className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden transition-all hover:shadow-lg flex flex-col flex-grow relative"
-            style={{ borderTop: `5px solid ${areaColor}` }}
+            style={{ borderTop: `5px solid ${areaColor}` }} // Mantém a borda superior com a cor da área
           >
             <PowerBIEmbed 
               reportId={dashboard.url} 
