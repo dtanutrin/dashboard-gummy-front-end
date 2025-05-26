@@ -27,7 +27,7 @@ const areaVisuals: { [key: string]: { color: string; icon: string; description: 
   "cs": { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, 
   "comercial": { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
   "financeiro":{ color: "#f48fb1", icon: "💼", description: "Fluxo de caixa, orçamentos e contas."},
-  "jurídico":{ color: "#f48fb1", icon: "💼", description: "Contratos, conformidade e processos."}
+  "jurídico":{ color: "#f48fb1", icon: "💼", description: "Contratos, conformidade e processos."},
 };
 
 export default function ViewDashboardPage({ params: paramsPromise }: { params: Promise<{ area: string; dashboardId: string }> }) {
