@@ -35,7 +35,8 @@ const getIconFilename = (areaName: string): string => {
   if (normalizedName.includes('rh')) return 'rh-icone.png';
   if (normalizedName.includes('financeiro')) return 'financeiro-icone.png';
   if (normalizedName.includes('jurídico')) return 'jurídico-icone.png';
-
+  if (normalizedName.includes('comercial interno')) return 'comercial-interno-icone.png';
+  if (normalizedName.includes('comercial')) return 'comercial-interno-icone.png';
   // Add specific checks for 'Comercial - Individual' and 'Comercial Interno' if needed
   // Example: if (normalizedName === 'comercial individual') return 'some-icon.png';
 
