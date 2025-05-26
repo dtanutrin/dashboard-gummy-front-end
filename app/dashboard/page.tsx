@@ -18,9 +18,8 @@ interface FrontendArea extends ApiArea {
   dashboards?: ApiDashboard[]; // Para armazenar dashboards da API
 }
 
-// Mapeamento de cores e ícones para áreas (pode ser expandido ou movido para um config)
 const areaVisuals: { [key: string]: { color: string; icon: string; description: string } } = {
-  default: { color: "#607d8b", icon: "📁", description: "Dashboards gerais" }, // Cor e ícone padrão
+  default: { color: "#607d8b", icon: "📁", description: "Dashboards gerais" }, 
   b2b: { color: "#607d8b", icon: "📈", description: "Vendas e Desempenho B2B" },
   "comercial interno": { color: "#f48fb1", icon: "💼", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial;" },
   compras: { color: "#795548", icon: "🛒", description: "Acompanhamento financeiro da Equipe de Compras;" },
@@ -31,14 +30,13 @@ const areaVisuals: { [key: string]: { color: string; icon: string; description: 
   "performance e vendas": { color: "#4caf50", icon: "💹", description: "Relatórios de vendas, Aquisição de mídia e influencer, pedidos e acompanhamento de metas em geral." },
   retenção: { color: "#00bcd4", icon: "🔄", description: "Relatórios com Foco em dados de Clientes;" },
   rh: { color: "#ff9800", icon: "👥", description: "Relatórios voltados para a Gestão de Pessoas;" },
-  // Manter os existentes que não foram explicitamente alterados, ou ajustar conforme a nova lista
-  marketing: { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" }, // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
-  operações: { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" }, // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
-  cs: { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
-  comercial: { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
+  marketing: { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" }, 
+  operações: { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" }, 
+  cs: { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, 
+  comercialIndividual: { color: "#f48fb1", icon: "💼", description: "Vendas e negociações"},
   juridico:{ color: "#f48fb1", icon: "⚖️", description: "Contratos, conformidade e processos."},
   financeiro:{ color: "#f48fb1", icon: "💰", description: "Fluxo de caixa, orçamentos e contas."},
-  comercialinterno: { color: "#f48fb1", icon: "💰", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial"}
+  comercialinterno: { color: "#f48fb1", icon: "💰", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial"},
 };
 
 export default function DashboardPage() {
