@@ -37,7 +37,8 @@ const areaVisuals: { [key: string]: { color: string; icon: string; description: 
   cs: { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
   comercial: { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
   juridico:{ color: "#f48fb1", icon: "⚖️", description: "Contratos, conformidade e processos."},
-  financeiro:{ color: "#f48fb1", icon: "💰", description: "Fluxo de caixa, orçamentos e contas."}
+  financeiro:{ color: "#f48fb1", icon: "💰", description: "Fluxo de caixa, orçamentos e contas."},
+  comercialinterno: { color: "#f48fb1", icon: "💰", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial"}
 };
 
 export default function DashboardPage() {

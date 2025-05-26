@@ -15,7 +15,6 @@ import Image from "next/image";
 const areaVisuals: { [key: string]: { color: string; description: string } } = {
   default: { color: "#607d8b", description: "Dashboards gerais" },
   b2b: { color: "#607d8b", description: "Vendas e Desempenho B2B" },
-  "comercial interno": { color: "#f48fb1", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial;" },
   compras: { color: "#795548", description: "Acompanhamento financeiro da Equipe de Compras;" },
   "cs/monitoramento": { color: "#ff80ab", description: "Dashboard de acompanhamento dos canais de atendimento e suporte ao Cliente;" },
   influencer: { color: "#9c27b0", description: "Relatórios que apresentam os dados de desempenho dos influenciadores;" },
@@ -29,6 +28,7 @@ const areaVisuals: { [key: string]: { color: string; description: string } } = {
   operações: { color: "#c2185b", description: "Processos e produtividade" }, 
   cs: { color: "#ff80ab", description: "Atendimento ao cliente" }, 
   comercial: { color: "#f48fb1", description: "Vendas e negociações" },
+  comercialinterno: { color: "#f48fb1", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial" },
   financeiro: {color: "#f48fb1", description: "Fluxo de caixa, orçamentos e contas." },
   juridico: {color: "#c2185b", description: "Contratos, conformidade e processos." },
 };
