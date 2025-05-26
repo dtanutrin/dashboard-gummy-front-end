@@ -27,10 +27,10 @@ const areaVisuals: { [key: string]: { color: string; description: string } } = {
   marketing: { color: "#ff4081", description: "Campanhas e análise de mercado" }, 
   operações: { color: "#c2185b", description: "Processos e produtividade" }, 
   cs: { color: "#ff80ab", description: "Atendimento ao cliente" }, 
-  comercialIndividual: { color: "#f48fb1", description: "Vendas e negociações"},
-  comercialinterno: { color: "#f48fb1", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial" },
-  financeiro: {color: "#f48fb1", description: "Fluxo de caixa, orçamentos e contas." },
-  juridico: {color: "#c2185b", description: "Contratos, conformidade e processos."},
+  "comercialIndividual": { color: "#f48fb1", description: "Vendas e negociações"},
+  "comercialinterno": { color: "#f48fb1", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial" },
+  "financeiro": {color: "#f48fb1", description: "Fluxo de caixa, orçamentos e contas." },
+  "juridico": {color: "#c2185b", description: "Contratos, conformidade e processos."},
 };
 
 export default function AreaDashboardsPage({ params: paramsPromise }: { params: Promise<{ area: string }> }) {

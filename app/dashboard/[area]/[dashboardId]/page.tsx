@@ -23,11 +23,11 @@ const areaVisuals: { [key: string]: { color: string; icon: string; description: 
   "rh": { color: "#ff9800", icon: "👥", description: "Relatórios voltados para a Gestão de Pessoas;" },
   "marketing": { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" }, 
   "operações": { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" }, 
+  "comercialinterno":{ color: "#f48fb1", icon: "💼", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial"},
   "cs": { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, 
   "juridico": { color: "#ff80ab", icon: "🎯", description: "Contratos, conformidade e processos." }, 
   "comercialIndividual": { color: "#607d8b", icon: "📈", description: "Vendas e negociações" },
   "financeiro":{ color: "#f48fb1", icon: "💼", description: "Fluxo de caixa, orçamentos e contas"},
-  "comercialinterno":{ color: "#f48fb1", icon: "💼", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial"},
 };
 
 
