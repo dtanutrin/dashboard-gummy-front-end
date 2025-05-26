@@ -13,7 +13,6 @@ import Image from "next/image";
 const areaVisuals: { [key: string]: { color: string; icon: string; description: string } } = {
   default: { color: "#607d8b", icon: "📁", description: "Dashboards gerais" },
   "b2b": { color: "#607d8b", icon: "📈", description: "Vendas e Desempenho B2B" },
-  "comercial interno": { color: "#f48fb1", icon: "💼", description: "Vendas, negociações e acompanhamento de desempenho da equipe comercial;" },
   "compras": { color: "#795548", icon: "🛒", description: "Acompanhamento financeiro da Equipe de Compras;" },
   "cs/monitoramento": { color: "#ff80ab", icon: "🎯", description: "Dashboard de acompanhamento dos canais de atendimento e suporte ao Cliente;" },
   "influencer": { color: "#9c27b0", icon: "⭐", description: "Relatórios que apresentam os dados de desempenho dos influenciadores;" },
