@@ -25,10 +25,10 @@ const areaVisuals: { [key: string]: { color: string; icon: string; description: 
   "marketing": { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" }, 
   "operações": { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" }, 
   "cs": { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, 
+  "juridico": { color: "#ff80ab", icon: "🎯", description: "Contratos, conformidade e processos." }, 
   "comercial": { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
-  "financeiro":{ color: "#f48fb1", icon: "💼", description: "Fluxo de caixa, orçamentos e contas"},
-  "jurídico":{ color: "#f48fb1", icon: "⚖️", description: "Contratos, conformidade e processos"},
-};
+  "financeiro":{ color: "#f48fb1", icon: "💼", description: "Fluxo de caixa, orçamentos e contas"},};
+
 
 export default function ViewDashboardPage({ params: paramsPromise }: { params: Promise<{ area: string; dashboardId: string }> }) {
   const params = use(paramsPromise);

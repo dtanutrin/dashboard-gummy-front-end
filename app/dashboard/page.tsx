@@ -36,8 +36,9 @@ const areaVisuals: { [key: string]: { color: string; icon: string; description: 
   operações: { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" }, // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
   cs: { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
   comercial: { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
-  financeiro:{ color: "#f48fb1", icon: "💰", description: "Fluxo de caixa, orçamentos e contas."},
-  jurídico:{ color: "#f48fb1", icon: "⚖️", description: "Contratos, conformidade e processos."}};
+  juridico:{ color: "#f48fb1", icon: "⚖️", description: "Contratos, conformidade e processos."},
+  financeiro:{ color: "#f48fb1", icon: "💰", description: "Fluxo de caixa, orçamentos e contas."}
+};
 
 export default function DashboardPage() {
   const { user, loading, isAuthenticated } = useAuth(); // Usando useAuth

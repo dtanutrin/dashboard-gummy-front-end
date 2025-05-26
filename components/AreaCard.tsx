@@ -36,7 +36,7 @@ const getIconFilename = (areaName: string): string => {
   if (normalizedName.includes('financeiro')) return 'financeiro-icone.png';
   if (normalizedName.includes('comercial interno')) return 'comercial-interno-icone.png';
   if (normalizedName.includes('comercial')) return 'comercial-interno-icone.png';
-  if (normalizedName.includes('jurídico')) return 'jurídico-icone.png';
+  if (normalizedName.includes('juridico')) return 'juridico-icone.png';
 
 
   return 'generico-icone.png'; // Fallback to generic icon
