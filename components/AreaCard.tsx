@@ -34,8 +34,8 @@ const getIconFilename = (areaName: string): string => {
   if (normalizedName.includes('retencao')) return 'retencao-icone.png';
   if (normalizedName.includes('rh')) return 'rh-icone.png';
   if (normalizedName.includes('financeiro')) return 'financeiro-icone.png';
-  if (normalizedName.includes('comercialinterno')) return 'comercial-interno-icone.png';
-  if (normalizedName.includes('comercialIndividual')) return 'comercial-interno-icone.png';
+  if (normalizedName.includes('comercial individual')) return 'comercial-interno-icone.png';
+  if (normalizedName.includes('comercial interno')) return 'comercial-interno-icone.png';
   if (normalizedName.includes('juridico')) return 'juridico-icone.png';
 
 
