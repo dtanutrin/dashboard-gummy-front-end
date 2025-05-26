@@ -35,8 +35,9 @@ const areaVisuals: { [key: string]: { color: string; icon: string; description: 
   marketing: { color: "#ff4081", icon: "📊", description: "Campanhas e análise de mercado" }, // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
   operações: { color: "#c2185b", icon: "⚙️", description: "Processos e produtividade" }, // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
   cs: { color: "#ff80ab", icon: "🎯", description: "Atendimento ao cliente" }, // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
-  comercial: { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" } // Mantido como exemplo, mas deve ser verificado se corresponde a alguma nova área
-};
+  comercial: { color: "#f48fb1", icon: "💼", description: "Vendas e negociações" },
+  financeiro:{ color: "#f48fb1", icon: "💼", description: "Vendas e negociações"},
+  jurídico:{ color: "#f48fb1", icon: "💼", description: "Vendas e negociações"}};
 
 export default function DashboardPage() {
   const { user, loading, isAuthenticated } = useAuth(); // Usando useAuth
