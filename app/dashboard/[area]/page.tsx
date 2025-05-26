@@ -29,6 +29,8 @@ const areaVisuals: { [key: string]: { color: string; description: string } } = {
   operações: { color: "#c2185b", description: "Processos e produtividade" }, 
   cs: { color: "#ff80ab", description: "Atendimento ao cliente" }, 
   comercial: { color: "#f48fb1", description: "Vendas e negociações" },
+  financeiro: {color: "#f48fb1", description: "Vendas e negociações" },
+  jurídico: {color: "#f48fb1", description: "Vendas e negociações" }
 };
 
 export default function AreaDashboardsPage({ params: paramsPromise }: { params: Promise<{ area: string }> }) {
