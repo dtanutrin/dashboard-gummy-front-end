@@ -1,4 +1,4 @@
-// File: /workspaces/dashboard-gummy-front-end/app/auth/login/page.tsx
+// File: C:\Users\BernardoSimões\v2-dta\dashboard-gummy-front-end\app\auth\login\page.tsx
 import * as entry from '../../../../../app/auth/login/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
