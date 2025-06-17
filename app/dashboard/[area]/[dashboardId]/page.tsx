@@ -146,23 +146,33 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
   return (
     <div className="flex flex-col min-h-screen bg-pink-50 dark:bg-gray-900">
       <Header />
-      <main className="flex-grow max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 w-full flex flex-col">
-        <div className="px-4 py-6 sm:px-0 flex flex-col flex-grow">
-          <div className="flex items-center mb-6">
-            <Link
-              href={`/dashboard/${encodedAreaForLink}`}
-              className="text-pink-600 hover:text-pink-800 dark:text-pink-400 dark:hover:text-pink-300 mr-4 transition-colors"
-            >
-              ← Voltar para {areaDisplayName}
-            </Link>
-            <h1 className="text-2xl font-semibold text-pink-600 dark:text-pink-400">
-              {dashboard.name}
-            </h1>
-          </div>
-          {/* AJUSTE: Borda superior agora usa cor rosa fixa */}
+      
+      {/* Botão flutuante para voltar - responsivo */}
+      <Link
+        href={`/dashboard/${encodedAreaForLink}`}
+        className="fixed top-16 sm:top-20 left-2 sm:left-4 z-50 bg-pink-600 hover:bg-pink-700 text-white p-2 sm:p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110 group"
+        title={`Voltar para ${areaDisplayName}`}
+      >
+        <svg 
+          className="w-4 h-4 sm:w-5 sm:h-5 transform group-hover:-translate-x-1 transition-transform" 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </Link>
+
+      {/* Área principal do dashboard - otimizada para mobile e desktop */}
+      <main className="flex-grow w-full h-full flex justify-center">
+        <div className="w-full max-w-[1400px] px-2 sm:px-4 lg:px-6 h-full">
           <div
-            className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden transition-all hover:shadow-lg flex flex-col flex-grow relative"
-            style={{ borderTop: `5px solid ${fixedPinkBorderColor}` }} 
+            className="bg-white dark:bg-gray-800 shadow-lg w-full h-full relative rounded-none sm:rounded-lg overflow-hidden"
+            style={{ 
+              borderTop: `3px solid ${fixedPinkBorderColor}`,
+              minHeight: 'calc(100vh - 70px)', // Otimizado para mobile
+              marginTop: '6px' // Menor espaçamento no mobile
+            }} 
           >
             <PowerBIEmbed 
               reportId={dashboard.url} 

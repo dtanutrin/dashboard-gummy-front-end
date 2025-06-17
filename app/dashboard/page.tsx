@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../app/auth/hooks"; // Alterado para useAuth
+import { useAuth } from "../../app/auth/hooks";
 import Header from "../../components/Header";
 import AreaCard from "../../components/AreaCard";
+import FavoritesCard from "../../components/FavoritesCard";
 import Image from "next/image";
-import { getAllAreas, Area as ApiArea, Dashboard as ApiDashboard } from "../../lib/api"; // Importando funções da API e tipos
+import { getAllAreas, Area as ApiArea, Dashboard as ApiDashboard } from "../../lib/api";
 
 
 // Interface para Área no frontend, pode incluir dados de exibição como cor/ícone
@@ -39,7 +40,7 @@ const areaVisuals: { [key: string]: { color: string; icon: string; description: 
 };
 
 export default function DashboardPage() {
-  const { user, loading, isAuthenticated } = useAuth(); // Usando useAuth
+  const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
   const [displayedAreas, setDisplayedAreas] = useState<FrontendArea[]>([]);
   const [isLoadingAreas, setIsLoadingAreas] = useState(true);
@@ -161,8 +162,11 @@ export default function DashboardPage() {
         </div>
 
         {displayedAreas.length > 0 ? (
-          //  Grid responsivo: 1 coluna mobile, 2 medium, 3 large.
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Card de Favoritos sempre primeiro */}
+            <FavoritesCard />
+            
+            {/* Cards das Áreas */}
             {displayedAreas.map((area, index) => (
               <AreaCard key={area.id} area={area} index={index} />
             ))}
