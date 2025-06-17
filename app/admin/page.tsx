@@ -69,6 +69,9 @@ export default function AdminPage() {
   const [dashboardUrl, setDashboardUrl] = useState('');
   const [dashboardInformation, setDashboardInformation] = useState(''); // Novo estado para o campo information
   const [selectedDashboardAreaId, setSelectedDashboardAreaId] = useState<string>('');
+  // Estados para filtros de dashboards
+  const [dashboardFilter, setDashboardFilter] = useState('');
+  const [dashboardAreaFilter, setDashboardAreaFilter] = useState('');
 
   // Estados para Áreas
   const [areas, setAreas] = useState<Area[]>([]);
@@ -76,6 +79,8 @@ export default function AdminPage() {
   const [showAreaForm, setShowAreaForm] = useState(false);
   const [editingArea, setEditingArea] = useState<Area | null>(null);
   const [areaName, setAreaName] = useState('');
+  // Estados para filtros de áreas
+  const [areaFilter, setAreaFilter] = useState('');
 
   // Estados para Usuários
   const [users, setUsers] = useState<User[]>([]);
@@ -86,6 +91,10 @@ export default function AdminPage() {
   const [userPassword, setUserPassword] = useState('');
   const [userRole, setUserRole] = useState('User');
   const [selectedUserAreaIds, setSelectedUserAreaIds] = useState<number[]>([]);
+  // Estados para filtros de usuários
+  const [userFilter, setUserFilter] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('');
+  const [userAreaFilter, setUserAreaFilter] = useState('');
   const [activeTab, setActiveTab] = useState<'dashboards' | 'users' | 'areas'>('dashboards');
 
   useEffect(() => {
@@ -320,6 +329,27 @@ export default function AdminPage() {
     );
   };
 
+  // Funções de filtro
+  const filteredDashboards = dashboards.filter(dashboard => {
+    const area = areas.find(a => a.id === dashboard.areaId);
+    const matchesName = dashboard.name.toLowerCase().includes(dashboardFilter.toLowerCase());
+    const matchesArea = !dashboardAreaFilter || dashboard.areaId.toString() === dashboardAreaFilter;
+    return matchesName && matchesArea;
+  });
+
+  const filteredUsers = users
+    .filter(user => {
+      const matchesEmail = user.email.toLowerCase().includes(userFilter.toLowerCase());
+      const matchesRole = !userRoleFilter || user.role === userRoleFilter;
+      const matchesArea = !userAreaFilter || (user.areas && user.areas.some(area => area.id.toString() === userAreaFilter));
+      return matchesEmail && matchesRole && matchesArea;
+    })
+    .sort((a, b) => b.id - a.id); // Ordenação do mais recente (ID maior) para o mais antigo
+
+  const filteredAreas = areas.filter(area => {
+    return area.name.toLowerCase().includes(areaFilter.toLowerCase());
+  });
+
   if (userLoading) {
     return <div className="p-8 text-center dark:text-white">Carregando informações do usuário...</div>;
   }
@@ -369,6 +399,42 @@ export default function AdminPage() {
             <Button onClick={openDashboardFormForNew} size="md" className="w-full sm:w-auto">
               Adicionar Novo Dashboard
             </Button>
+          </div>
+
+          {/* Filtros para Dashboards */}
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-white">Filtros</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="dashboardNameFilter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Filtrar por Nome
+                </label>
+                <Input
+                  id="dashboardNameFilter"
+                  type="text"
+                  value={dashboardFilter}
+                  onChange={(e) => setDashboardFilter(e.target.value)}
+                  placeholder="Digite o nome do dashboard..."
+                />
+              </div>
+              <div>
+                <label htmlFor="dashboardAreaFilterSelect" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Filtrar por Área
+                </label>
+                <Select
+                  id="dashboardAreaFilterSelect"
+                  value={dashboardAreaFilter}
+                  onChange={(e) => setDashboardAreaFilter(e.target.value)}
+                >
+                  <option value="">Todas as áreas</option>
+                  {areas.map((area) => (
+                    <option key={area.id} value={area.id.toString()}>
+                      {area.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
           </div>
 
           {showDashboardForm && (
@@ -457,9 +523,9 @@ export default function AdminPage() {
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600"></div>
               <p className="mt-2 text-gray-600 dark:text-gray-400">Carregando dashboards...</p>
             </div>
-          ) : dashboards.length === 0 ? (
+          ) : filteredDashboards.length === 0 ? (
             <div className="text-center py-8 text-gray-600 dark:text-gray-400">
-              Nenhum dashboard encontrado. Adicione um novo dashboard para começar.
+              {dashboards.length === 0 ? 'Nenhum dashboard encontrado. Adicione um novo dashboard para começar.' : 'Nenhum dashboard encontrado com os filtros aplicados.'}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -475,7 +541,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {dashboards.map((dashboard) => {
+                  {filteredDashboards.map((dashboard) => {
                     const area = areas.find((a) => a.id === dashboard.areaId);
                     return (
                       <tr key={dashboard.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -528,6 +594,56 @@ export default function AdminPage() {
             <Button onClick={openUserFormForNew} size="md" className="w-full sm:w-auto">
               Adicionar Novo Usuário
             </Button>
+          </div>
+
+          {/* Filtros para Usuários */}
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-white">Filtros</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="userEmailFilter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Filtrar por Email
+                </label>
+                <Input
+                  id="userEmailFilter"
+                  type="text"
+                  value={userFilter}
+                  onChange={(e) => setUserFilter(e.target.value)}
+                  placeholder="Digite o email do usuário..."
+                />
+              </div>
+              <div>
+                <label htmlFor="userRoleFilterSelect" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Filtrar por Perfil
+                </label>
+                <Select
+                  id="userRoleFilterSelect"
+                  value={userRoleFilter}
+                  onChange={(e) => setUserRoleFilter(e.target.value)}
+                >
+                  <option value="">Todos os perfis</option>
+                  <option value="User">Usuário</option>
+                  <option value="Admin">Administrador</option>
+                </Select>
+              </div>
+              <div>
+                <label htmlFor="userAreaFilterSelect" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Filtrar por Área
+                </label>
+                <Select
+                  id="userAreaFilterSelect"
+                  value={userAreaFilter}
+                  onChange={(e) => setUserAreaFilter(e.target.value)}
+                >
+                  <option value="">Todas as áreas</option>
+                  {areas.map((area) => (
+                    <option key={area.id} value={area.id.toString()}>
+                      {area.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
           </div>
 
           {showUserForm && (
@@ -625,9 +741,9 @@ export default function AdminPage() {
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600"></div>
               <p className="mt-2 text-gray-600 dark:text-gray-400">Carregando usuários...</p>
             </div>
-          ) : users.length === 0 ? (
+          ) : filteredUsers.length === 0 ? (
             <div className="text-center py-8 text-gray-600 dark:text-gray-400">
-              Nenhum usuário encontrado. Adicione um novo usuário para começar.
+              {users.length === 0 ? 'Nenhum usuário encontrado. Adicione um novo usuário para começar.' : 'Nenhum usuário encontrado com os filtros aplicados.'}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -642,7 +758,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((user) => (
+                  {filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <Td>{user.id}</Td>
                       <Td>{user.email}</Td>
@@ -710,6 +826,25 @@ export default function AdminPage() {
             </Button>
           </div>
 
+          {/* Filtros para Áreas */}
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-white">Filtros</h3>
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label htmlFor="areaNameFilter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Filtrar por Nome
+                </label>
+                <Input
+                  id="areaNameFilter"
+                  type="text"
+                  value={areaFilter}
+                  onChange={(e) => setAreaFilter(e.target.value)}
+                  placeholder="Digite o nome da área..."
+                />
+              </div>
+            </div>
+          </div>
+
           {showAreaForm && (
             <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-white">
@@ -753,9 +888,9 @@ export default function AdminPage() {
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600"></div>
               <p className="mt-2 text-gray-600 dark:text-gray-400">Carregando áreas...</p>
             </div>
-          ) : areas.length === 0 ? (
+          ) : filteredAreas.length === 0 ? (
             <div className="text-center py-8 text-gray-600 dark:text-gray-400">
-              Nenhuma área encontrada. Adicione uma nova área para começar.
+              {areas.length === 0 ? 'Nenhuma área encontrada. Adicione uma nova área para começar.' : 'Nenhuma área encontrada com os filtros aplicados.'}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -769,7 +904,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {areas.map((area) => {
+                  {filteredAreas.map((area) => {
                     const areaDashboards = dashboards.filter(d => d.areaId === area.id);
                     return (
                       <tr key={area.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
