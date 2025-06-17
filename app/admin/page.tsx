@@ -618,29 +618,29 @@ export default function AdminPage() {
                 <thead>
                   <tr>
                     <Th 
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 w-16" 
                       onClick={() => toggleDashboardSort('id')}
                     >
                       ID
                       <SortIcon field="id" currentField={dashboardSortField} direction={dashboardSortDirection} />
                     </Th>
                     <Th 
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 w-1/4" 
                       onClick={() => toggleDashboardSort('name')}
                     >
                       NOME
                       <SortIcon field="name" currentField={dashboardSortField} direction={dashboardSortDirection} />
                     </Th>
                     <Th 
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 w-32" 
                       onClick={() => toggleDashboardSort('areaId')}
                     >
                       ÁREA
                       <SortIcon field="areaId" currentField={dashboardSortField} direction={dashboardSortDirection} />
                     </Th>
-                    <Th>URL</Th>
-                    <Th>INFORMAÇÃO</Th>
-                    <Th>AÇÕES</Th>
+                    <Th className="w-1/4">URL</Th>
+                    <Th className="w-24 text-center">INFORMAÇÃO</Th>
+                    <Th className="w-40 text-right">AÇÕES</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -648,10 +648,10 @@ export default function AdminPage() {
                     const area = areas.find((a) => a.id === dashboard.areaId);
                     return (
                       <tr key={dashboard.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <Td>{dashboard.id}</Td>
-                        <Td>{dashboard.name}</Td>
-                        <Td>{area?.name || 'Área não encontrada'}</Td>
-                        <Td className="max-w-xs truncate">
+                        <Td className="w-16">{dashboard.id}</Td>
+                        <Td className="w-1/4">{dashboard.name}</Td>
+                        <Td className="w-32">{area?.name || 'Área não encontrada'}</Td>
+                        <Td className="max-w-xs truncate w-1/4">
                           <a
                             href={dashboard.url}
                             target="_blank"
@@ -661,9 +661,9 @@ export default function AdminPage() {
                             {dashboard.url}
                           </a>
                         </Td>
-                        <Td>{dashboard.information ? 'Sim' : 'Não'}</Td>
-                        <Td>
-                          <div className="flex space-x-2">
+                        <Td className="w-24 text-center">{dashboard.information ? 'Sim' : 'Não'}</Td>
+                        <Td className="w-40">
+                          <div className="flex justify-end space-x-2">
                             <Button
                               variant="secondary"
                               size="sm"
@@ -875,7 +875,7 @@ export default function AdminPage() {
                       <SortIcon field="role" currentField={userSortField} direction={userSortDirection} />
                     </Th>
                     <Th>ÁREAS DE ACESSO</Th>
-                    <Th>AÇÕES</Th>
+                    <Th className="text-right">AÇÕES</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -911,7 +911,7 @@ export default function AdminPage() {
                         </div>
                       </Td>
                       <Td>
-                        <div className="flex space-x-2">
+                        <div className="flex justify-end space-x-2">
                           <Button
                             variant="secondary"
                             size="sm"
@@ -1019,21 +1019,21 @@ export default function AdminPage() {
                 <thead>
                   <tr>
                     <Th 
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 w-16" 
                       onClick={() => toggleAreaSort('id')}
                     >
                       ID
                       <SortIcon field="id" currentField={areaSortField} direction={areaSortDirection} />
                     </Th>
                     <Th 
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 w-1/3" 
                       onClick={() => toggleAreaSort('name')}
                     >
                       NOME
                       <SortIcon field="name" currentField={areaSortField} direction={areaSortDirection} />
                     </Th>
-                    <Th>DASHBOARDS</Th>
-                    <Th>AÇÕES</Th>
+                    <Th className="w-32 text-center">DASHBOARDS</Th>
+                    <Th className="w-48 text-right">AÇÕES</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1041,11 +1041,11 @@ export default function AdminPage() {
                     const areaDashboards = dashboards.filter(d => d.areaId === area.id);
                     return (
                       <tr key={area.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <Td>{area.id}</Td>
-                        <Td>{area.name}</Td>
-                        <Td>{areaDashboards.length}</Td>
-                        <Td>
-                          <div className="flex space-x-2">
+                        <Td className="w-16">{area.id}</Td>
+                        <Td className="w-1/3">{area.name}</Td>
+                        <Td className="w-32 text-center">{areaDashboards.length}</Td>
+                        <Td className="w-48">
+                          <div className="flex justify-end space-x-2">
                             <Button
                               variant="secondary"
                               size="sm"
