@@ -67,11 +67,14 @@ export default function AdminPage() {
   const [editingDashboard, setEditingDashboard] = useState<Dashboard | null>(null);
   const [dashboardName, setDashboardName] = useState('');
   const [dashboardUrl, setDashboardUrl] = useState('');
-  const [dashboardInformation, setDashboardInformation] = useState(''); // Novo estado para o campo information
+  const [dashboardInformation, setDashboardInformation] = useState(''); 
   const [selectedDashboardAreaId, setSelectedDashboardAreaId] = useState<string>('');
   // Estados para filtros de dashboards
   const [dashboardFilter, setDashboardFilter] = useState('');
   const [dashboardAreaFilter, setDashboardAreaFilter] = useState('');
+  // Estados para ordenação de dashboards
+  const [dashboardSortField, setDashboardSortField] = useState<'id' | 'name' | 'areaId'>('id');
+  const [dashboardSortDirection, setDashboardSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Estados para Áreas
   const [areas, setAreas] = useState<Area[]>([]);
@@ -81,6 +84,9 @@ export default function AdminPage() {
   const [areaName, setAreaName] = useState('');
   // Estados para filtros de áreas
   const [areaFilter, setAreaFilter] = useState('');
+  // Estados para ordenação de áreas
+  const [areaSortField, setAreaSortField] = useState<'id' | 'name'>('id');
+  const [areaSortDirection, setAreaSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Estados para Usuários
   const [users, setUsers] = useState<User[]>([]);
@@ -95,6 +101,10 @@ export default function AdminPage() {
   const [userFilter, setUserFilter] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('');
   const [userAreaFilter, setUserAreaFilter] = useState('');
+  // Estados para ordenação de usuários
+  const [userSortField, setUserSortField] = useState<'id' | 'email' | 'role'>('id');
+  const [userSortDirection, setUserSortDirection] = useState<'asc' | 'desc'>('desc');
+  
   const [activeTab, setActiveTab] = useState<'dashboards' | 'users' | 'areas'>('dashboards');
 
   useEffect(() => {
@@ -329,13 +339,64 @@ export default function AdminPage() {
     );
   };
 
-  // Funções de filtro
-  const filteredDashboards = dashboards.filter(dashboard => {
-    const area = areas.find(a => a.id === dashboard.areaId);
-    const matchesName = dashboard.name.toLowerCase().includes(dashboardFilter.toLowerCase());
-    const matchesArea = !dashboardAreaFilter || dashboard.areaId.toString() === dashboardAreaFilter;
-    return matchesName && matchesArea;
-  });
+  // Componente para o ícone de ordenação
+  const SortIcon = ({ field, currentField, direction }: { field: string, currentField: string, direction: 'asc' | 'desc' }) => {
+    if (field !== currentField) return <span className="ml-1 text-gray-400">↕</span>;
+    return <span className="ml-1">{direction === 'asc' ? '↑' : '↓'}</span>;
+  };
+
+  // Funções para alternar ordenação
+  const toggleDashboardSort = (field: 'id' | 'name' | 'areaId') => {
+    if (dashboardSortField === field) {
+      setDashboardSortDirection(dashboardSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setDashboardSortField(field);
+      setDashboardSortDirection('asc');
+    }
+  };
+
+  const toggleUserSort = (field: 'id' | 'email' | 'role') => {
+    if (userSortField === field) {
+      setUserSortDirection(userSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setUserSortField(field);
+      setUserSortDirection('asc');
+    }
+  };
+
+  const toggleAreaSort = (field: 'id' | 'name') => {
+    if (areaSortField === field) {
+      setAreaSortDirection(areaSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setAreaSortField(field);
+      setAreaSortDirection('asc');
+    }
+  };
+
+  // Funções de filtro e ordenação
+  const filteredDashboards = dashboards
+    .filter(dashboard => {
+      const area = areas.find(a => a.id === dashboard.areaId);
+      const matchesName = dashboard.name.toLowerCase().includes(dashboardFilter.toLowerCase());
+      const matchesArea = !dashboardAreaFilter || dashboard.areaId.toString() === dashboardAreaFilter;
+      return matchesName && matchesArea;
+    })
+    .sort((a, b) => {
+      if (dashboardSortField === 'id') {
+        return dashboardSortDirection === 'asc' ? a.id - b.id : b.id - a.id;
+      } else if (dashboardSortField === 'name') {
+        return dashboardSortDirection === 'asc' 
+          ? a.name.localeCompare(b.name) 
+          : b.name.localeCompare(a.name);
+      } else if (dashboardSortField === 'areaId') {
+        const areaA = areas.find(area => area.id === a.areaId)?.name || '';
+        const areaB = areas.find(area => area.id === b.areaId)?.name || '';
+        return dashboardSortDirection === 'asc' 
+          ? areaA.localeCompare(areaB) 
+          : areaB.localeCompare(areaA);
+      }
+      return 0;
+    });
 
   const filteredUsers = users
     .filter(user => {
@@ -344,11 +405,35 @@ export default function AdminPage() {
       const matchesArea = !userAreaFilter || (user.areas && user.areas.some(area => area.id.toString() === userAreaFilter));
       return matchesEmail && matchesRole && matchesArea;
     })
-    .sort((a, b) => b.id - a.id); // Ordenação do mais recente (ID maior) para o mais antigo
+    .sort((a, b) => {
+      if (userSortField === 'id') {
+        return userSortDirection === 'asc' ? a.id - b.id : b.id - a.id;
+      } else if (userSortField === 'email') {
+        return userSortDirection === 'asc' 
+          ? a.email.localeCompare(b.email) 
+          : b.email.localeCompare(a.email);
+      } else if (userSortField === 'role') {
+        return userSortDirection === 'asc' 
+          ? a.role.localeCompare(b.role) 
+          : b.role.localeCompare(a.role);
+      }
+      return 0;
+    });
 
-  const filteredAreas = areas.filter(area => {
-    return area.name.toLowerCase().includes(areaFilter.toLowerCase());
-  });
+  const filteredAreas = areas
+    .filter(area => {
+      return area.name.toLowerCase().includes(areaFilter.toLowerCase());
+    })
+    .sort((a, b) => {
+      if (areaSortField === 'id') {
+        return areaSortDirection === 'asc' ? a.id - b.id : b.id - a.id;
+      } else if (areaSortField === 'name') {
+        return areaSortDirection === 'asc' 
+          ? a.name.localeCompare(b.name) 
+          : b.name.localeCompare(a.name);
+      }
+      return 0;
+    });
 
   if (userLoading) {
     return <div className="p-8 text-center dark:text-white">Carregando informações do usuário...</div>;
@@ -532,9 +617,27 @@ export default function AdminPage() {
               <Table>
                 <thead>
                   <tr>
-                    <Th>ID</Th>
-                    <Th>NOME</Th>
-                    <Th>ÁREA</Th>
+                    <Th 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      onClick={() => toggleDashboardSort('id')}
+                    >
+                      ID
+                      <SortIcon field="id" currentField={dashboardSortField} direction={dashboardSortDirection} />
+                    </Th>
+                    <Th 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      onClick={() => toggleDashboardSort('name')}
+                    >
+                      NOME
+                      <SortIcon field="name" currentField={dashboardSortField} direction={dashboardSortDirection} />
+                    </Th>
+                    <Th 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      onClick={() => toggleDashboardSort('areaId')}
+                    >
+                      ÁREA
+                      <SortIcon field="areaId" currentField={dashboardSortField} direction={dashboardSortDirection} />
+                    </Th>
                     <Th>URL</Th>
                     <Th>INFORMAÇÃO</Th>
                     <Th>AÇÕES</Th>
@@ -750,9 +853,27 @@ export default function AdminPage() {
               <Table>
                 <thead>
                   <tr>
-                    <Th>ID</Th>
-                    <Th>EMAIL</Th>
-                    <Th>PERFIL</Th>
+                    <Th 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      onClick={() => toggleUserSort('id')}
+                    >
+                      ID
+                      <SortIcon field="id" currentField={userSortField} direction={userSortDirection} />
+                    </Th>
+                    <Th 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      onClick={() => toggleUserSort('email')}
+                    >
+                      EMAIL
+                      <SortIcon field="email" currentField={userSortField} direction={userSortDirection} />
+                    </Th>
+                    <Th 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      onClick={() => toggleUserSort('role')}
+                    >
+                      PERFIL
+                      <SortIcon field="role" currentField={userSortField} direction={userSortDirection} />
+                    </Th>
                     <Th>ÁREAS DE ACESSO</Th>
                     <Th>AÇÕES</Th>
                   </tr>
@@ -897,8 +1018,20 @@ export default function AdminPage() {
               <Table>
                 <thead>
                   <tr>
-                    <Th>ID</Th>
-                    <Th>NOME</Th>
+                    <Th 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      onClick={() => toggleAreaSort('id')}
+                    >
+                      ID
+                      <SortIcon field="id" currentField={areaSortField} direction={areaSortDirection} />
+                    </Th>
+                    <Th 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" 
+                      onClick={() => toggleAreaSort('name')}
+                    >
+                      NOME
+                      <SortIcon field="name" currentField={areaSortField} direction={areaSortDirection} />
+                    </Th>
                     <Th>DASHBOARDS</Th>
                     <Th>AÇÕES</Th>
                   </tr>
