@@ -1,0 +1,178 @@
+# Guia de Integração Frontend - Sistema de Dashboards com Controle Granular de Acesso
+
+## Visão Geral das Mudanças
+
+Foi implementado um sistema de controle granular de acesso aos dashboards com dois níveis de permissão:
+1. **Nível 1**: Acesso à área (UserAreaAccess)
+2. **Nível 2**: Acesso específico aos dashboards daquela área (UserDashboardAccess)
+
+## Nova Estrutura do Banco de Dados
+
+### Tabelas Criadas/Modificadas:
+
+**UserDashboardAccess** (Nova tabela)
+- user_id (INTEGER)
+- dashboard_id (INTEGER) 
+- granted_at (TIMESTAMP)
+- granted_by (INTEGER) - ID do admin que concedeu o acesso
+
+**Dashboards** (Existente, com relacionamentos atualizados)
+- Relacionamento com UserDashboardAccess para controle granular
+
+**UserAreaAccess** (Existente)
+- Continua controlando acesso às áreas
+
+## Endpoints para o Frontend
+
+### 1. Autenticação
+**POST** /api/auth/login
+- **Payload**: { email, password }
+- **Resposta**: Inclui agora as áreas do usuário
+{
+  "token": "jwt_token",
+  "user": {
+    "id": 1,
+    "email": "user@email.com",
+    "role": "user",
+    "areas": [
+      { "id": 1, "name": "Logística" },
+      { "id": 2, "name": "Comercial" }
+    ]
+  }
+}
+
+### 2. Dashboards (Modificados)
+
+**GET** /api/dashboards
+- **Comportamento**: 
+  - Admin: vê todos os dashboards
+  - User: vê apenas dashboards com acesso específico concedido
+- **Resposta**:
+[
+  {
+    "id": 1,
+    "name": "Dashboard Vendas",
+    "url": "https://powerbi.com/dashboard1",
+    "information": "Informações adicionais",
+    "areaId": 1,
+    "areaName": "Comercial",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+]
+
+**GET** /api/dashboards/:id
+- **Comportamento**: Verifica se o usuário tem acesso específico ao dashboard
+- **Resposta**: Objeto do dashboard ou 403 se sem acesso
+
+**POST** /api/dashboards (Admin apenas)
+- **Payload**: { name, url, areaId, information }
+
+**PUT** /api/dashboards/:id (Admin apenas)
+- **Payload**: { name, url, areaId, information }
+
+**DELETE** /api/dashboards/:id (Admin apenas)
+
+### 3. Gerenciamento de Permissões de Dashboard (Novos Endpoints)
+
+**POST** /api/dashboard-permissions/grant (Admin apenas)
+- **Descrição**: Concede acesso específico a um dashboard
+- **Payload**: 
+{
+  "userId": 1,
+  "dashboardId": 1
+}
+- **Pré-requisito**: Usuário deve ter acesso à área do dashboard
+- **Resposta**: Confirmação do acesso concedido
+
+**POST** /api/dashboard-permissions/revoke (Admin apenas)
+- **Descrição**: Revoga acesso específico a um dashboard
+- **Payload**: 
+{
+  "userId": 1,
+  "dashboardId": 1
+}
+
+**GET** /api/dashboard-permissions/user/:userId (Admin apenas)
+- **Descrição**: Lista todos os acessos de dashboard de um usuário
+- **Resposta**:
+[
+  {
+    "userId": 1,
+    "dashboardId": 1,
+    "grantedAt": "2024-01-01T00:00:00.000Z",
+    "grantedBy": 2,
+    "dashboard": {
+      "id": 1,
+      "name": "Dashboard Vendas",
+      "area": {
+        "id": 1,
+        "name": "Comercial"
+      }
+    }
+  }
+]
+
+### 4. Áreas
+
+**GET** /api/areas
+- **Comportamento**: 
+  - Admin: vê todas as áreas
+  - User: vê apenas áreas com acesso
+
+**GET** /api/areas/:id
+- **Comportamento**: Verifica acesso à área antes de retornar
+
+**POST** /api/areas (Admin apenas)
+**PUT** /api/areas/:id (Admin apenas)
+**DELETE** /api/areas/:id (Admin apenas)
+
+### 5. Usuários (Modificados)
+
+**GET** /api/users
+- **Resposta**: Inclui áreas do usuário
+
+**POST** /api/users
+- **Payload**: { email, password, role, areaIds }
+- **areaIds**: Array de IDs das áreas para acesso
+
+**PUT** /api/users/:id
+- **Payload**: { email, password, role, areaIds }
+- **Comportamento**: Atualiza acessos às áreas
+
+## Fluxo para Tela de Gerenciamento (Frontend)
+
+### Informações Necessárias:
+
+1. **Lista de Usuários**: GET /api/users
+2. **Lista de Áreas**: GET /api/areas
+3. **Lista de Dashboards**: GET /api/dashboards
+4. **Acessos de um usuário**: GET /api/dashboard-permissions/user/:userId
+
+### Funcionalidades da Tela:
+
+1. **Gerenciar Acesso às Áreas**:
+   - Editar usuário: PUT /api/users/:id com areaIds
+
+2. **Gerenciar Acesso aos Dashboards**:
+   - Conceder acesso: POST /api/dashboard-permissions/grant
+   - Revogar acesso: POST /api/dashboard-permissions/revoke
+
+### Regras de Negócio:
+
+1. **Pré-requisito**: Usuário deve ter acesso à área antes de receber acesso aos dashboards
+2. **Hierarquia**: Admin pode gerenciar tudo, usuários comuns só veem seus acessos
+3. **Validação**: Sistema valida automaticamente se usuário tem acesso à área do dashboard
+
+### Estrutura Sugerida para a Tela:
+
+Tela de Gerenciamento
+├── Seleção de Usuário (dropdown)
+├── Seção: Acesso às Áreas
+│   └── Checkboxes das áreas disponíveis
+├── Seção: Acesso aos Dashboards
+│   ├── Por área (agrupado)
+│   └── Checkboxes dos dashboards de cada área
+└── Botões: Salvar/Cancelar
+
+Todos os endpoints requerem autenticação via token JWT no header Authorization: Bearer <token>.

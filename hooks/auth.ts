@@ -5,14 +5,14 @@ import { useEffect, useState } from "react"
 // Hook para obter o usuário atual e o token
 export function useUser() {
   const [user, setUser] = useState<any>(null)
-  const [token, setToken] = useState<string | null>(null) // Adicionado estado para o token
+  const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     console.log("[auth.ts] useUser useEffect - Iniciando busca de dados do localStorage");
     try {
       const userData = localStorage.getItem("user")
-      const tokenData = localStorage.getItem("token") // Buscar o token do localStorage
+      const tokenData = localStorage.getItem("token") // CORRIGIDO: usar "token"
       
       if (userData) {
         console.log("[auth.ts] useUser useEffect - userData encontrado:", userData);
@@ -36,36 +36,35 @@ export function useUser() {
     }
   }, [])
 
-  // Adicionado para logar mudanças no token e usuário que serão retornados
   useEffect(() => {
     console.log("[auth.ts] useUser - Estado atualizado - User:", user, "Token:", token, "Loading:", loading);
   }, [user, token, loading]);
 
-  return { user, token, loading } // Retornar o token também
+  return { user, token, loading }
 }
 
 // Hook para verificar se o usuário tem acesso a uma área específica
 export function useHasAccess(area: string) {
-  const { user, loading } = useUser() // useUser agora também retorna token, mas não é usado aqui diretamente
+  const { user, loading } = useUser()
 
   if (loading) return false
   if (!user) return false
 
   // Admin tem acesso a todas as áreas
-  if (user.role === "admin") return true
+  if (user.role === "Admin") return true // CORRIGIDO: "Admin" com maiúscula
 
   // Verificar se o usuário tem acesso à área específica
-  // Ajustar conforme a estrutura real do objeto user.areas
-  return Array.isArray(user.areas) && user.areas.includes(area)
+  // Conforme o backend, user.areas deve ser um array de objetos Area
+  return Array.isArray(user.areas) && user.areas.some((userArea: any) => 
+    userArea.name.toLowerCase() === area.toLowerCase()
+  )
 }
 
 // Função para fazer logout
 export function logout(router: any) {
   console.log("[auth.ts] logout - Removendo user e token do localStorage");
   localStorage.removeItem("user")
-  localStorage.removeItem("token") // Remover o token no logout também
-  // Idealmente, o estado do useUser deveria ser resetado aqui também, 
-  // mas como é um hook, o componente que o usa será re-renderizado e o useEffect buscará do localStorage (que estará vazio)
+  localStorage.removeItem("token") // CORRIGIDO: usar "token"
   router.push("/auth/login")
 }
 

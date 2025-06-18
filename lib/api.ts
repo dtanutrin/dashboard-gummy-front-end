@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 
 // Função auxiliar para verificar se estamos no navegador
 const isBrowser = () => typeof window !== 'undefined';
@@ -6,7 +6,7 @@ const isBrowser = () => typeof window !== 'undefined';
 // Função para obter o token JWT do localStorage
 export const getToken = (): string | null => {
   if (isBrowser()) {
-    return localStorage.getItem("authToken");
+    return localStorage.getItem("token"); // CORRIGIDO: usar "token"
   }
   return null;
 };
@@ -72,7 +72,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     if (isBrowser()) {
-      const token = localStorage.getItem("authToken");
+      const token = localStorage.getItem("token"); // CORRIGIDO: usar "token"
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -88,7 +88,7 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
       if (isBrowser()) {
-        localStorage.removeItem("authToken");
+        localStorage.removeItem("token"); // CORRIGIDO: usar "token"
         localStorage.removeItem("user");
       }
     }
@@ -99,8 +99,9 @@ apiClient.interceptors.response.use(
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
   try {
     const response = await apiClient.post<LoginResponse>("/auth/login", { email, password });
+    
     if (isBrowser() && response.data.token) {
-      localStorage.setItem("authToken", response.data.token);
+      localStorage.setItem("token", response.data.token); // CORRIGIDO: usar "token"
       localStorage.setItem("user", JSON.stringify(response.data.user)); 
     }
     return response.data;
@@ -115,7 +116,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 
 export const logout = (): void => {
   if (isBrowser()) {
-    localStorage.removeItem("authToken");
+    localStorage.removeItem("token"); // CORRIGIDO: usar "token"
     localStorage.removeItem("user");
   }
 };
@@ -178,8 +179,10 @@ export const getAllAreas = async (): Promise<Area[]> => {
   return response.data;
 };
 
-export const getAreaById = async (id: number): Promise<Area> => {
-  const response = await apiClient.get<Area>(`/areas/${id}`);
+// Adicionar nova função para obter área específica com dashboards filtrados
+// Corrigir a função getAreaById
+export const getAreaById = async (areaId: string): Promise<Area> => {
+  const response = await apiClient.get(`/areas/${areaId}`); // Corrigido: usar apiClient
   return response.data;
 };
 
@@ -310,6 +313,33 @@ export const forgotPassword = async (email: string): Promise<PasswordResetRespon
     }
     throw new Error("Erro desconhecido ao solicitar redefinição de senha");
   }
+};
+
+// Tipos para permissões de dashboard
+export interface UserDashboardAccess {
+  id: number;
+  userId: number;
+  dashboardId: number;
+  grantedAt: string;
+}
+
+export interface DashboardPermissionPayload {
+  userId: number;
+  dashboardId: number;
+}
+
+// Funções para gerenciamento de permissões de dashboard
+export const grantDashboardAccess = async (payload: DashboardPermissionPayload): Promise<void> => {
+  await apiClient.post('/dashboard-permissions/grant', payload);
+};
+
+export const revokeDashboardAccess = async (payload: DashboardPermissionPayload): Promise<void> => {
+  await apiClient.post('/dashboard-permissions/revoke', payload);
+};
+
+export const getUserDashboardAccess = async (userId: number): Promise<UserDashboardAccess[]> => {
+  const response = await apiClient.get<UserDashboardAccess[]>(`/dashboard-permissions/user/${userId}`);
+  return response.data;
 };
 
 export default apiClient;

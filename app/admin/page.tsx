@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode, type ComponentPropsWithoutRef, For
 import { useRouter } from 'next/navigation';
 import Link from 'next/link'; 
 import { useAuth } from "../../app/auth/hooks"; 
-import apiClient, { getAllAreas as apiGetAllAreas, Area as ApiArea, Dashboard as ApiDashboard, UserData as ApiUser, UserCreatePayload, UserUpdatePayload, createUser as apiCreateUser, getAllUsers as apiGetAllUsers, updateUser as apiUpdateUser, deleteUser as apiDeleteUser } from '../../lib/api';
+import apiClient, { getAllAreas as apiGetAllAreas, Area as ApiArea, Dashboard as ApiDashboard, UserData as ApiUser, UserCreatePayload, UserUpdatePayload, createUser as apiCreateUser, getAllUsers as apiGetAllUsers, updateUser as apiUpdateUser, deleteUser as apiDeleteUser, UserDashboardAccess, DashboardPermissionPayload, grantDashboardAccess, revokeDashboardAccess, getUserDashboardAccess } from '../../lib/api';
 import { toast, Toaster } from 'react-hot-toast';
 
 // Tipos para os dados (mantendo consistência)
@@ -59,6 +59,17 @@ const Td = ({ children, ...props }: TdProps) => <td {...props} className={`py-3 
 export default function AdminPage() {
   const { user, loading: userLoading, isAuthenticated } = useAuth();
   const router = useRouter();
+  const [localUser, setLocalUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const userData = user;
+    if (!userData || userData.role !== 'Admin') {
+      // Redirecionar para página não autorizada
+      window.location.href = '/dashboard';
+      return;
+    }
+    setLocalUser(userData);
+  }, [user]);
 
   // Estados para Dashboards
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
@@ -104,6 +115,13 @@ export default function AdminPage() {
   // Estados para ordenação de usuários
   const [userSortField, setUserSortField] = useState<'id' | 'email' | 'role'>('id');
   const [userSortDirection, setUserSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Novos estados para gerenciamento de permissões de dashboard
+  const [selectedUserForPermissions, setSelectedUserForPermissions] = useState<User | null>(null);
+  const [userDashboardAccess, setUserDashboardAccess] = useState<UserDashboardAccess[]>([]);
+  const [isLoadingUserAccess, setIsLoadingUserAccess] = useState(false);
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [selectedUserDashboardIds, setSelectedUserDashboardIds] = useState<number[]>([]);
   
   const [activeTab, setActiveTab] = useState<'dashboards' | 'users' | 'areas'>('dashboards');
 
@@ -337,6 +355,75 @@ export default function AdminPage() {
     setSelectedUserAreaIds(prev => 
       prev.includes(areaId) ? prev.filter(id => id !== areaId) : [...prev, areaId]
     );
+  };
+
+  // Nova função para buscar acessos de dashboard de um usuário
+  const fetchUserDashboardAccess = async (userId: number) => {
+    setIsLoadingUserAccess(true);
+    try {
+      const response = await getUserDashboardAccess(userId);
+      setUserDashboardAccess(response);
+      setSelectedUserDashboardIds(response.map(access => access.dashboardId));
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao buscar acessos do usuário.');
+    }
+    setIsLoadingUserAccess(false);
+  };
+
+  // Função para abrir modal de gerenciamento de permissões
+  const openPermissionsModal = async (user: User) => {
+    setSelectedUserForPermissions(user);
+    setShowPermissionsModal(true);
+    await fetchUserDashboardAccess(user.id);
+  };
+
+  // Função para alternar acesso a dashboard específico
+  const toggleDashboardAccess = (dashboardId: number) => {
+    setSelectedUserDashboardIds(prev => 
+      prev.includes(dashboardId) 
+        ? prev.filter(id => id !== dashboardId) 
+        : [...prev, dashboardId]
+    );
+  };
+
+  // Função para salvar permissões de dashboard
+  const saveUserDashboardPermissions = async () => {
+    if (!selectedUserForPermissions) return;
+
+    try {
+      const currentAccess = userDashboardAccess.map(access => access.dashboardId);
+      const toGrant = selectedUserDashboardIds.filter(id => !currentAccess.includes(id));
+      const toRevoke = currentAccess.filter(id => !selectedUserDashboardIds.includes(id));
+
+      // Conceder novos acessos
+      for (const dashboardId of toGrant) {
+        await grantDashboardAccess({
+          userId: selectedUserForPermissions.id,
+          dashboardId
+        });
+      }
+
+      // Revogar acessos removidos
+      for (const dashboardId of toRevoke) {
+        await revokeDashboardAccess({
+          userId: selectedUserForPermissions.id,
+          dashboardId
+        });
+      }
+
+      toast.success('Permissões de dashboard atualizadas com sucesso!');
+      setShowPermissionsModal(false);
+      await fetchUserDashboardAccess(selectedUserForPermissions.id);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao atualizar permissões.');
+    }
+  };
+
+  // Função para obter dashboards disponíveis para um usuário (baseado nas áreas que ele tem acesso)
+  const getAvailableDashboardsForUser = (user: User) => {
+    if (!user.areas) return [];
+    const userAreaIds = user.areas.map(area => area.id);
+    return dashboards.filter(dashboard => userAreaIds.includes(dashboard.areaId));
   };
 
   // Componente para o ícone de ordenação
@@ -920,10 +1007,18 @@ export default function AdminPage() {
                             Editar
                           </Button>
                           <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openPermissionsModal(user)}
+                            disabled={!user.areas || user.areas.length === 0}
+                          >
+                            Permissões
+                          </Button>
+                          <Button
                             variant="danger"
                             size="sm"
                             onClick={() => handleUserDelete(user.id)}
-                            disabled={user.id === 1} // Protege o usuário admin inicial
+                            disabled={user.id === 1}
                           >
                             Excluir
                           </Button>
@@ -933,6 +1028,144 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </Table>
+            </div>
+          )}
+
+          {/* Modal de Gerenciamento de Permissões de Dashboard */}
+          {showPermissionsModal && selectedUserForPermissions && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
+                      Gerenciar Permissões de Dashboard - {selectedUserForPermissions.email}
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowPermissionsModal(false)}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+
+                  {isLoadingUserAccess ? (
+                    <div className="text-center py-8">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600"></div>
+                      <p className="mt-2 text-gray-600 dark:text-gray-400">Carregando acessos...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Seção: Acesso às Áreas */}
+                      <div>
+                        <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-3">
+                          Áreas com Acesso
+                        </h4>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {selectedUserForPermissions.areas && selectedUserForPermissions.areas.length > 0 ? (
+                            selectedUserForPermissions.areas.map((area) => (
+                              <span
+                                key={area.id}
+                                className="px-3 py-1 text-sm bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full"
+                              >
+                                {area.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-gray-500 dark:text-gray-400 text-sm">
+                              Usuário não tem acesso a nenhuma área
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Seção: Acesso aos Dashboards */}
+                      <div>
+                        <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-3">
+                          Acesso aos Dashboards
+                        </h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                          Selecione os dashboards específicos que o usuário pode acessar dentro das áreas permitidas.
+                        </p>
+                        
+                        {selectedUserForPermissions.areas && selectedUserForPermissions.areas.length > 0 ? (
+                          <div className="space-y-4">
+                            {selectedUserForPermissions.areas.map((area) => {
+                              const areaDashboards = dashboards.filter(d => d.areaId === area.id);
+                              
+                              if (areaDashboards.length === 0) {
+                                return (
+                                  <div key={area.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                                    <h5 className="font-medium text-gray-800 dark:text-white mb-2">
+                                      {area.name}
+                                    </h5>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                      Nenhum dashboard disponível nesta área
+                                    </p>
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <div key={area.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                                  <h5 className="font-medium text-gray-800 dark:text-white mb-3">
+                                    {area.name}
+                                  </h5>
+                                  <div className="space-y-2">
+                                    {areaDashboards.map((dashboard) => (
+                                      <div key={dashboard.id} className="flex items-center">
+                                        <input
+                                          type="checkbox"
+                                          id={`dashboard-${dashboard.id}`}
+                                          checked={selectedUserDashboardIds.includes(dashboard.id)}
+                                          onChange={() => toggleDashboardAccess(dashboard.id)}
+                                          className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                                        />
+                                        <label 
+                                          htmlFor={`dashboard-${dashboard.id}`} 
+                                          className="ml-3 block text-sm text-gray-700 dark:text-gray-300"
+                                        >
+                                          <div>
+                                            <div className="font-medium">{dashboard.name}</div>
+                                            {dashboard.information && (
+                                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                {dashboard.information}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </label>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                            O usuário precisa ter acesso a pelo menos uma área antes de receber acesso aos dashboards.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowPermissionsModal(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={saveUserDashboardPermissions}
+                      disabled={!selectedUserForPermissions.areas || selectedUserForPermissions.areas.length === 0}
+                    >
+                      Salvar Permissões
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

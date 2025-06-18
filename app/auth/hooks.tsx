@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   const loadUserFromToken = useCallback(async () => {
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem("token"); // CORRIGIDO: usar "token"
     if (!token) {
       setLoading(false);
       setUser(null); 
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     loadUserFromToken();
     
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "authToken" && e.newValue === null) {
+      if (e.key === "token" && e.newValue === null) { // CORRIGIDO: usar "token"
         setUser(null);
       }
     };
@@ -107,7 +107,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const value = {
     user,
     loading,
-    isAuthenticated: !!user && !!localStorage.getItem("authToken"),
+    isAuthenticated: !!user && !!localStorage.getItem("token"), // CORRIGIDO: usar "token"
     login,
     logout,
     refreshUser,

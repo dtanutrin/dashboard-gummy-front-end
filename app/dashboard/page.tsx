@@ -77,31 +77,25 @@ export default function DashboardPage() {
             };
           });
 
-          // Lógica de filtragem de áreas baseada no perfil do usuário (Admin vê tudo, outros veem áreas permitidas)
-          // Esta lógica de `user.areas` (slugs) precisa ser compatível com o que `fetchCurrentUserData` retorna.
-          // Se `user.areas` for uma lista de IDs de área, a filtragem mudaria.
-          // Por enquanto, vamos assumir que `user.areas` (se existir) é uma lista de nomes ou slugs.
-          
+          // Lógica de filtragem de áreas baseada no perfil do usuário
           let filteredAreas: FrontendArea[];
-          if (user.role?.toLowerCase() === "admin") {
+          if (user.role === "Admin") { // CORRIGIDO: "Admin" com maiúscula
             filteredAreas = processedAreas;
           } else {
-            // Se o usuário não for admin, filtramos pelas áreas que ele tem acesso.
-            // A propriedade `user.areas` deve ser uma lista de nomes de áreas ou IDs.
-            // Vamos assumir que `user.areas` é uma lista de objetos Area com `id` e `name`.
-            const userAllowedAreaIds = user.areas?.map(a => a.id) || [];
+            // Filtrar baseado nas áreas que o usuário tem acesso
+            // Conforme o backend, user.areas é um array de objetos Area
+            const userAllowedAreaIds = user.areas?.map((area: any) => area.id) || [];
             if (userAllowedAreaIds.length > 0) {
-                 filteredAreas = processedAreas.filter(area => userAllowedAreaIds.includes(area.id));
+              filteredAreas = processedAreas.filter(area => userAllowedAreaIds.includes(area.id));
             } else {
-                // Se user.areas não estiver definido ou vazio, e não for admin, não mostra nada.
-                filteredAreas = [];
+              filteredAreas = [];
             }
           }
 
           setDisplayedAreas(filteredAreas);
 
           if (filteredAreas.length === 0 && !loading) {
-            setDebugUserInfo(`Debug Info: User Role: ${user.role}, User Allowed Area IDs: ${JSON.stringify(user.areas?.map(a=>a.id))}`);
+            setDebugUserInfo(`Debug Info: User Role: ${user.role}, User Areas: ${JSON.stringify(user.areas)}`);
           } else {
             setDebugUserInfo("");
           }
@@ -174,7 +168,7 @@ export default function DashboardPage() {
         ) : (
           <div className="text-center py-10">
             <p className="text-xl text-gray-500 dark:text-gray-400">Nenhuma área disponível para você no momento.</p>
-            {user && user.role?.toLowerCase() !== "admin" && (
+            {user && user.role !== "Admin" && ( // CORRIGIDO: "Admin" com maiúscula
               <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
                 Entre em contato com um administrador se você acredita que deveria ter acesso a alguma área.
               </p>
