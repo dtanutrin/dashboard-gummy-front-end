@@ -20,6 +20,9 @@ const DashboardCard = ({ dashboard, areaSlug, areaColor = "#607d8b" }: Dashboard
   const iconRef = useRef<HTMLDivElement>(null);
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
   
+  // Cor rosa fixa para todos os cards
+  const pinkColor = "#db2777"; // pink-600
+  
   // Convertendo dashboard.id (number) para string
   const dashboardIsFavorite = isHydrated ? isFavorite(dashboard.id.toString()) : false;
   
@@ -80,7 +83,7 @@ const DashboardCard = ({ dashboard, areaSlug, areaColor = "#607d8b" }: Dashboard
       <div 
         className="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 rounded-lg overflow-hidden flex flex-col"
         style={{ 
-          borderTop: `4px solid ${areaColor}`,
+          borderTop: `4px solid ${pinkColor}`, // Mudança aqui: usar pinkColor ao invés de areaColor
           height: '220px' // Altura reduzida de 280px para 220px
         }}
       >
@@ -144,7 +147,7 @@ const DashboardCard = ({ dashboard, areaSlug, areaColor = "#607d8b" }: Dashboard
               <button 
                 className="w-full px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150"
                 style={{
-                  backgroundColor: areaColor,
+                  backgroundColor: pinkColor, // Mudança aqui: usar pinkColor ao invés de areaColor
                   color: "white",
                 }}
                 onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"}
@@ -164,7 +167,7 @@ const DashboardCard = ({ dashboard, areaSlug, areaColor = "#607d8b" }: Dashboard
             ref={modalRef}
             className={`bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-6 max-w-lg mx-auto transform transition-all duration-300 ${isExpanded ? 'w-full max-w-3xl' : 'w-full max-w-md'}`}
             style={{
-              borderTop: `4px solid ${areaColor}`,
+              borderTop: `4px solid ${pinkColor}`, // Mudança aqui: usar pinkColor ao invés de areaColor
               maxHeight: '80vh',
               overflow: 'auto'
             }}

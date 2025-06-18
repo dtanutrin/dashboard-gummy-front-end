@@ -4,11 +4,9 @@ import axios from 'axios';
 const isBrowser = () => typeof window !== 'undefined';
 
 // Função para obter o token JWT do localStorage
-export const getToken = (): string | null => {
-  if (isBrowser()) {
-    return localStorage.getItem("token"); // CORRIGIDO: usar "token"
-  }
-  return null;
+const getToken = (): string | null => {
+  if (!isBrowser()) return null;
+  return localStorage.getItem("token");
 };
 
 // Tipos para a API

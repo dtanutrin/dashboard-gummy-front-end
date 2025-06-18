@@ -60,6 +60,9 @@ export const useFavorites = () => {
     return favorites.some(fav => fav.id === dashboardId);
   };
 
+  const removeFavorite = (dashboardId: string) => {
+    setFavorites(prev => prev.filter(fav => fav.id !== dashboardId));
+  };
   const clearFavorites = () => {
     setFavorites([]);
   };
@@ -68,6 +71,7 @@ export const useFavorites = () => {
     favorites,
     toggleFavorite,
     isFavorite,
+    removeFavorite,
     clearFavorites,
     isLoaded
   };

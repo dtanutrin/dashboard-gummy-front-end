@@ -32,10 +32,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   const router = useRouter();
 
+  // Garantir que só execute no cliente
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const loadUserFromToken = useCallback(async () => {
-    const token = localStorage.getItem("token"); // CORRIGIDO: usar "token"
+    // Só executar no cliente
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+    
+    const token = localStorage.getItem("token");
     if (!token) {
       setLoading(false);
       setUser(null); 
@@ -58,19 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await loadUserFromToken();
   }, [loadUserFromToken]);
 
-  useEffect(() => {
-    loadUserFromToken();
-    
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "token" && e.newValue === null) { // CORRIGIDO: usar "token"
-        setUser(null);
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, [loadUserFromToken]);
-
+  // ADICIONAR: Função de login
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
@@ -94,6 +94,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // ADICIONAR: Função de logout
   const logout = async () => {
     try {
       await api.logout(); 
@@ -104,10 +105,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  useEffect(() => {
+    // Só carregar dados quando estiver no cliente
+    if (isClient) {
+      loadUserFromToken();
+    }
+    
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "token" && e.newValue === null) {
+        setUser(null);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener("storage", handleStorageChange);
+      return () => window.removeEventListener("storage", handleStorageChange);
+    }
+  }, [loadUserFromToken, isClient]);
+
   const value = {
     user,
     loading,
-    isAuthenticated: !!user && !!localStorage.getItem("token"), // CORRIGIDO: usar "token"
+    isAuthenticated: isClient && !!user && (typeof window !== 'undefined' ? !!localStorage.getItem("token") : false),
     login,
     logout,
     refreshUser,

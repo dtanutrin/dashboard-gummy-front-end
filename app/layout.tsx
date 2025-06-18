@@ -32,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="light h-full">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-pink-50 dark:bg-gray-900`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-pink-50 dark:bg-gray-900`} suppressHydrationWarning={true}>
         <ClientAuthProvider>
           <ServiceWorkerRegistrar />
           <div className="flex-grow">
