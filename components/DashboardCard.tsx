@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Dashboard as ApiDashboard } from "../lib/api";
+import { Dashboard as ApiDashboard, trackDashboardAccess } from "../lib/api";
 import { useState, useRef, useEffect } from "react";
 import { useFavorites } from "../hooks/useFavorites";
+import { useRouter } from "next/navigation";
 
 interface DashboardCardProps {
   dashboard: ApiDashboard;
@@ -16,9 +17,11 @@ const DashboardCard = ({ dashboard, areaSlug, areaColor = "#607d8b" }: Dashboard
   const [showModal, setShowModal] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isTrackingAccess, setIsTrackingAccess] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const iconRef = useRef<HTMLDivElement>(null);
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
+  const router = useRouter();
   
   // Cor rosa fixa para todos os cards
   const pinkColor = "#db2777"; // pink-600
@@ -76,6 +79,30 @@ const DashboardCard = ({ dashboard, areaSlug, areaColor = "#607d8b" }: Dashboard
     e.preventDefault();
     // Convertendo dashboard.id para string
     toggleFavorite(dashboard.id.toString(), dashboard.name, areaSlug);
+  };
+
+  // Função para rastrear acesso e navegar
+  const handleDashboardAccess = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (isTrackingAccess) return; // Previne cliques múltiplos
+    
+    setIsTrackingAccess(true);
+    
+    try {
+      // Registrar o acesso no backend
+      await trackDashboardAccess(dashboard.id);
+      console.log('Acesso ao dashboard registrado com sucesso');
+      
+      // Navegar para o dashboard
+      router.push(`/dashboard/${encodedAreaSlug}/${dashboard.id}`);
+    } catch (error) {
+      console.error('Erro ao registrar acesso ao dashboard:', error);
+      // Mesmo com erro no rastreamento, permite o acesso
+      router.push(`/dashboard/${encodedAreaSlug}/${dashboard.id}`);
+    } finally {
+      setIsTrackingAccess(false);
+    }
   };
 
   return (
@@ -143,19 +170,21 @@ const DashboardCard = ({ dashboard, areaSlug, areaColor = "#607d8b" }: Dashboard
           
           {/* Botão no final */}
           <div className="mt-auto pt-3">
-            <Link href={`/dashboard/${encodedAreaSlug}/${dashboard.id}`} className="block w-full">
-              <button 
-                className="w-full px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150"
-                style={{
-                  backgroundColor: pinkColor, // Mudança aqui: usar pinkColor ao invés de areaColor
-                  color: "white",
-                }}
-                onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"}
-                onMouseOut={(e) => e.currentTarget.style.opacity = "1"}
-              >
-                Visualizar Dashboard
-              </button>
-            </Link>
+            <button 
+              onClick={handleDashboardAccess}
+              disabled={isTrackingAccess}
+              className={`w-full px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150 ${
+                isTrackingAccess 
+                  ? 'opacity-50 cursor-not-allowed' 
+                  : 'hover:opacity-90'
+              }`}
+              style={{
+                backgroundColor: pinkColor,
+                color: "white",
+              }}
+            >
+              {isTrackingAccess ? 'Carregando...' : 'Visualizar Dashboard'}
+            </button>
           </div>
         </div>
       </div>

@@ -4,8 +4,19 @@ import { useEffect, useState, type ReactNode, type ComponentPropsWithoutRef, For
 import { useRouter } from 'next/navigation';
 import Link from 'next/link'; 
 import { useAuth } from "../../app/auth/hooks"; 
-import apiClient, { getAllAreas as apiGetAllAreas, Area as ApiArea, Dashboard as ApiDashboard, UserData as ApiUser, UserCreatePayload, UserUpdatePayload, createUser as apiCreateUser, getAllUsers as apiGetAllUsers, updateUser as apiUpdateUser, deleteUser as apiDeleteUser, UserDashboardAccess, DashboardPermissionPayload, grantDashboardAccess, revokeDashboardAccess, getUserDashboardAccess } from '../../lib/api';
+import apiClient, { getAllAreas as apiGetAllAreas, Area as ApiArea, Dashboard as ApiDashboard, UserData as ApiUser, UserCreatePayload, UserUpdatePayload, createUser as apiCreateUser, getAllUsers as apiGetAllUsers, updateUser as apiUpdateUser, deleteUser as apiDeleteUser, UserDashboardAccess, DashboardPermissionPayload, grantDashboardAccess, revokeDashboardAccess, getUserDashboardAccess, LogEntry, LogsResponse, LogsFilters, getLogs, exportLogs, clearLogs } from '../../lib/api';
 import { toast, Toaster } from 'react-hot-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../../components/ui/alert-dialog';
 
 // Tipos para os dados (mantendo consistência)
 interface Area extends ApiArea {}
@@ -62,14 +73,15 @@ export default function AdminPage() {
   const [localUser, setLocalUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const userData = user;
-    if (!userData || userData.role !== 'Admin') {
-      // Redirecionar para página não autorizada
+    // Só redireciona se não estiver carregando e realmente não for admin
+    if (!userLoading && (!user || user.role !== 'Admin')) {
       window.location.href = '/dashboard';
       return;
     }
-    setLocalUser(userData);
-  }, [user]);
+    if (user) {
+      setLocalUser(user);
+    }
+  }, [user, userLoading]); // Adicionar userLoading como dependência
 
   // Estados para Dashboards
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
@@ -123,7 +135,22 @@ export default function AdminPage() {
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [selectedUserDashboardIds, setSelectedUserDashboardIds] = useState<number[]>([]);
   
-  const [activeTab, setActiveTab] = useState<'dashboards' | 'users' | 'areas'>('dashboards');
+  // Estados para Logs
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+  const [logsTotal, setLogsTotal] = useState(0);
+  const [logsPage, setLogsPage] = useState(1);
+  const [logsLimit] = useState(50);
+  // Estados para filtros de logs
+  const [logLevelFilter, setLogLevelFilter] = useState('');
+  const [logUserFilter, setLogUserFilter] = useState('');
+  const [logActionFilter, setLogActionFilter] = useState('');
+  const [logResourceFilter, setLogResourceFilter] = useState('');
+  const [logSearchFilter, setLogSearchFilter] = useState('');
+  const [logStartDateFilter, setLogStartDateFilter] = useState('');
+  const [logEndDateFilter, setLogEndDateFilter] = useState('');
+  
+  const [activeTab, setActiveTab] = useState<'dashboards' | 'users' | 'areas' | 'logs'>('dashboards');
 
   useEffect(() => {
     if (!userLoading) {
@@ -224,6 +251,7 @@ export default function AdminPage() {
       fetchAreasData();
       fetchDashboardsData();
       fetchUsersData();
+      fetchLogsData();
     }
   }, [user, userLoading, isAuthenticated]);
 
@@ -235,8 +263,17 @@ export default function AdminPage() {
       fetchUsersData();
     } else if (activeTab === 'areas' && areas.length === 0 && !isLoadingAreas) {
       fetchAreasData();
+    } else if (activeTab === 'logs' && logs.length === 0 && !isLoadingLogs) {
+      fetchLogsData();
     }
   }, [activeTab]);
+
+  // Efeito para recarregar logs quando filtros ou página mudam
+  useEffect(() => {
+    if (activeTab === 'logs') {
+      fetchLogsData();
+    }
+  }, [logsPage, logLevelFilter, logUserFilter, logActionFilter, logResourceFilter, logSearchFilter, logStartDateFilter, logEndDateFilter]);
 
   const handleDashboardFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -419,6 +456,131 @@ export default function AdminPage() {
     }
   };
 
+  const fetchLogsData = async () => {
+    setIsLoadingLogs(true);
+    try {
+      const filters: LogsFilters = {
+        page: logsPage,
+        limit: logsLimit,
+        ...(logLevelFilter && { level: logLevelFilter }),
+        ...(logUserFilter && { userId: parseInt(logUserFilter) }),
+        ...(logActionFilter && { action: logActionFilter }),
+        ...(logResourceFilter && { resource: logResourceFilter }),
+        ...(logSearchFilter && { search: logSearchFilter }),
+        ...(logStartDateFilter && { startDate: logStartDateFilter }),
+        ...(logEndDateFilter && { endDate: logEndDateFilter }),
+      };
+      
+      const response = await getLogs(filters);
+      setLogs(response.logs || []); // Garantir que sempre seja um array
+      setLogsTotal(response.total || 0);
+    } catch (error: any) {
+      console.error('Erro detalhado ao buscar logs:', error);
+      setLogs([]); // Definir como array vazio em caso de erro
+      setLogsTotal(0);
+      toast.error(error.message || 'Erro ao buscar logs.');
+    }
+    setIsLoadingLogs(false);
+  };
+
+  const handleExportLogs = async () => {
+    try {
+      const filters: LogsFilters = {
+        ...(logLevelFilter && { level: logLevelFilter }),
+        ...(logUserFilter && { userId: parseInt(logUserFilter) }),
+        ...(logActionFilter && { action: logActionFilter }),
+        ...(logResourceFilter && { resource: logResourceFilter }),
+        ...(logSearchFilter && { search: logSearchFilter }),
+        ...(logStartDateFilter && { startDate: logStartDateFilter }),
+        ...(logEndDateFilter && { endDate: logEndDateFilter }),
+      };
+      
+      const blob = await exportLogs(filters);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `logs_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Logs exportados com sucesso!');
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao exportar logs.');
+    }
+  };
+
+  // Estados para o diálogo de limpeza de logs
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [clearRetentionDays, setClearRetentionDays] = useState('90');
+  const [isClearing, setIsClearing] = useState(false);
+
+  const handleClearLogs = async () => {
+    // Validação e confirmação para logs muito recentes (menos de 7 dias)
+    if (clearRetentionDays !== 'all') {
+      const days = parseInt(clearRetentionDays);
+      if (days < 7) {
+        const confirmed = window.confirm(
+          `⚠️ ATENÇÃO: Você está prestes a remover logs de apenas ${days} dia(s). Isso pode incluir logs importantes para debugging. Tem certeza?`
+        );
+        if (!confirmed) {
+          return;
+        }
+      }
+    }
+    
+    // Confirmação extra para "limpar todos"
+    if (clearRetentionDays === 'all') {
+      const confirmed = window.confirm(
+        '⚠️ ATENÇÃO: Você está prestes a remover TODOS os logs do sistema. Esta ação é irreversível. Tem certeza absoluta?'
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+    
+    setIsClearing(true);
+    try {
+      const olderThanDays = clearRetentionDays === 'all' ? undefined : parseInt(clearRetentionDays);
+      const result = await clearLogs(olderThanDays);
+      
+      // Mensagem de sucesso mais detalhada
+      const message = clearRetentionDays === 'all' 
+        ? `Todos os logs foram limpos! ${result.deleted} registros removidos.`
+        : `Logs anteriores a ${olderThanDays} dias foram limpos! ${result.deleted} registros removidos.`;
+      
+      toast.success(message);
+      
+      // Atualizar a lista de logs
+      fetchLogsData();
+      setShowClearDialog(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao limpar logs.');
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  const formatLogLevel = (level: string | undefined | null) => {
+    const safeLevel = level || 'info';
+    switch (safeLevel.toLowerCase()) {
+      case 'error':
+        return 'text-red-600 bg-red-50 px-2 py-1 rounded text-xs font-medium';
+      case 'warn':
+        return 'text-yellow-600 bg-yellow-50 px-2 py-1 rounded text-xs font-medium';
+      case 'info':
+        return 'text-blue-600 bg-blue-50 px-2 py-1 rounded text-xs font-medium';
+      case 'debug':
+        return 'text-gray-600 bg-gray-50 px-2 py-1 rounded text-xs font-medium';
+      default:
+        return 'text-blue-600 bg-blue-50 px-2 py-1 rounded text-xs font-medium';
+    }
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    return new Date(timestamp).toLocaleString('pt-BR');
+  };
+
   // Função para obter dashboards disponíveis para um usuário (baseado nas áreas que ele tem acesso)
   const getAvailableDashboardsForUser = (user: User) => {
     if (!user.areas) return [];
@@ -531,7 +693,16 @@ export default function AdminPage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <Toaster position="top-right" />
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+        }}
+      />
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">Painel de Administração</h1>
         <Link href="/dashboard">
@@ -560,6 +731,12 @@ export default function AdminPage() {
             className={`${activeTab === 'areas' ? 'border-pink-500 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'} whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm`}
           >
             Áreas
+          </button>
+          <button
+            onClick={() => setActiveTab('logs')}
+            className={`${activeTab === 'logs' ? 'border-pink-500 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'} whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm`}
+          >
+            Logs
           </button>
         </nav>
       </div>
@@ -1305,6 +1482,368 @@ export default function AdminPage() {
           )}
         </div>
       )}
+
+      {activeTab === 'logs' && (
+        <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+            <h2 className="text-xl sm:text-2xl font-semibold text-pink-600 dark:text-pink-400">Gerenciamento de Logs</h2>
+            <div className="flex gap-2">
+              <Button 
+                onClick={fetchLogsData} 
+                variant="outline" 
+                size="md" 
+                className="w-full sm:w-auto"
+                disabled={isLoadingLogs}
+              >
+                {isLoadingLogs ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Atualizando...
+                  </>
+                ) : (
+                  <>
+                    🔄 Atualizar
+                  </>
+                )}
+              </Button>
+              <Button onClick={handleExportLogs} variant="outline" size="md" className="w-full sm:w-auto">
+                📥 Exportar
+              </Button>
+              <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="danger" size="md" className="w-full sm:w-auto">
+                    🗑️ Limpar Logs
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="max-w-md bg-white dark:bg-gray-800">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                      <span className="text-2xl">🗑️</span>
+                      Limpar Logs de Auditoria
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Escolha o período de retenção dos logs:
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  
+                  <div className="space-y-3">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="retention"
+                        value="30"
+                        checked={clearRetentionDays === '30'}
+                        onChange={(e) => setClearRetentionDays(e.target.value)}
+                        className="text-pink-600"
+                      />
+                      <div>
+                        <div className="font-medium">Últimos 30 dias</div>
+                        <div className="text-sm text-gray-500">Remove logs anteriores a 1 mês</div>
+                      </div>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="retention"
+                        value="90"
+                        checked={clearRetentionDays === '90'}
+                        onChange={(e) => setClearRetentionDays(e.target.value)}
+                        className="text-pink-600"
+                      />
+                      <div>
+                        <div className="font-medium">Últimos 90 dias (Recomendado)</div>
+                        <div className="text-sm text-gray-500">Remove logs anteriores a 3 meses</div>
+                      </div>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="retention"
+                        value="180"
+                        checked={clearRetentionDays === '180'}
+                        onChange={(e) => setClearRetentionDays(e.target.value)}
+                        className="text-pink-600"
+                      />
+                      <div>
+                        <div className="font-medium">Últimos 6 meses</div>
+                        <div className="text-sm text-gray-500">Remove logs anteriores a 6 meses</div>
+                      </div>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="retention"
+                        value="all"
+                        checked={clearRetentionDays === 'all'}
+                        onChange={(e) => setClearRetentionDays(e.target.value)}
+                        className="text-red-600"
+                      />
+                      <div>
+                        <div className="font-medium text-red-600">Limpar TODOS os logs</div>
+                        <div className="text-sm text-red-500">⚠️ Remove todos os registros (irreversível)</div>
+                      </div>
+                    </label>
+                  </div>
+                  
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <span className="text-yellow-600 text-lg">⚠️</span>
+                      <div className="text-sm">
+                        <div className="font-medium text-yellow-800">Importante:</div>
+                        <div className="text-yellow-700 mt-1 space-y-1">
+                          <div>• Esta ação remove os logs permanentemente</div>
+                          <div>• Os logs removidos não podem ser recuperados</div>
+                          <div>• Considere exportar os logs antes de limpar</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <AlertDialogFooter className="gap-2">
+                    <AlertDialogCancel disabled={isClearing}>
+                      Cancelar
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleClearLogs}
+                      disabled={isClearing}
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      {isClearing ? (
+                        <>
+                          <span className="animate-spin mr-2">⏳</span>
+                          Limpando...
+                        </>
+                      ) : (
+                        <>
+                          🗑️ Confirmar Limpeza
+                        </>
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+
+          {/* Filtros para Logs */}
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-white">Filtros</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="logSearch" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Buscar
+                </label>
+                <Input
+                  id="logSearch"
+                  type="text"
+                  value={logSearchFilter}
+                  onChange={(e) => setLogSearchFilter(e.target.value)}
+                  placeholder="Buscar em mensagens..."
+                />
+              </div>
+              <div>
+                <label htmlFor="logLevel" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Nível
+                </label>
+                <Select
+                  id="logLevel"
+                  value={logLevelFilter}
+                  onChange={(e) => setLogLevelFilter(e.target.value)}
+                >
+                  <option value="">Todos os níveis</option>
+                  <option value="error">Error</option>
+                  <option value="warn">Warning</option>
+                  <option value="info">Info</option>
+                  <option value="debug">Debug</option>
+                </Select>
+              </div>
+              <div>
+                <label htmlFor="logUser" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Usuário
+                </label>
+                <Select
+                  id="logUser"
+                  value={logUserFilter}
+                  onChange={(e) => setLogUserFilter(e.target.value)}
+                >
+                  <option value="">Todos os usuários</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id.toString()}>
+                      {user.email}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <label htmlFor="logAction" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Ação
+                </label>
+                <Input
+                  id="logAction"
+                  type="text"
+                  value={logActionFilter}
+                  onChange={(e) => setLogActionFilter(e.target.value)}
+                  placeholder="Ex: login, create, update..."
+                />
+              </div>
+              <div>
+                <label htmlFor="logResource" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Recurso
+                </label>
+                <Input
+                  id="logResource"
+                  type="text"
+                  value={logResourceFilter}
+                  onChange={(e) => setLogResourceFilter(e.target.value)}
+                  placeholder="Ex: dashboard, user, area..."
+                />
+              </div>
+              <div>
+                <label htmlFor="logStartDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Data Início
+                </label>
+                <Input
+                  id="logStartDate"
+                  type="datetime-local"
+                  value={logStartDateFilter}
+                  onChange={(e) => setLogStartDateFilter(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="logEndDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Data Fim
+                </label>
+                <Input
+                  id="logEndDate"
+                  type="datetime-local"
+                  value={logEndDateFilter}
+                  onChange={(e) => setLogEndDateFilter(e.target.value)}
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  onClick={() => {
+                    setLogSearchFilter('');
+                    setLogLevelFilter('');
+                    setLogUserFilter('');
+                    setLogActionFilter('');
+                    setLogResourceFilter('');
+                    setLogStartDateFilter('');
+                    setLogEndDateFilter('');
+                    setLogsPage(1);
+                  }}
+                  variant="secondary"
+                  size="md"
+                  className="w-full"
+                >
+                  Limpar Filtros
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {isLoadingLogs ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600"></div>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">Carregando logs...</p>
+            </div>
+          ) : (!logs || logs.length === 0) ? (
+            <div className="text-center py-8 text-gray-600 dark:text-gray-400">
+              Nenhum log encontrado com os filtros aplicados.
+            </div>
+          ) : (
+            <>
+              <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                Mostrando {logs?.length || 0} de {logsTotal} logs (Página {logsPage})
+              </div>
+              
+              <div className="overflow-x-auto">
+                <Table>
+                  <thead>
+                    <tr>
+                      <Th>Timestamp</Th>
+                      <Th>Nível</Th>
+                      <Th>Usuário</Th>
+                      <Th>Ação</Th>
+                      <Th>Recurso</Th>
+                      <Th>Mensagem</Th>
+                      <Th className="w-32">IP</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(logs || []).map((log) => (
+                      <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <Td className="font-mono text-xs">
+                          {formatTimestamp(log.timestamp)}
+                        </Td>
+                        <Td>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${formatLogLevel(log.level || 'info')}`}>
+                            {(log.level || 'info').toUpperCase()}
+                          </span>
+                        </Td>
+                        <Td>
+                          {log.userName || log.user?.name || log.userEmail || `Usuário ID: ${log.userId}` || 'Usuário não encontrado'}
+                        </Td>
+                        <Td>
+                          <span className="font-medium">{log.action || '-'}</span>
+                        </Td>
+                        <Td>
+                          {log.resource || '-'}
+                        </Td>
+                        <Td className="max-w-xs">
+                          <div className="truncate" title={log.message}>
+                            {log.message}
+                          </div>
+                          {log.details && (
+                            <details className="mt-1">
+                              <summary className="text-xs text-gray-500 cursor-pointer">Detalhes</summary>
+                              <pre className="text-xs bg-gray-100 dark:bg-gray-600 p-2 rounded mt-1 overflow-x-auto">
+                                {JSON.stringify(log.details, null, 2)}
+                              </pre>
+                            </details>
+                          )}
+                        </Td>
+                        <Td className="font-mono text-xs">
+                          {log.ip || '-'}
+                        </Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
+
+              {/* Paginação */}
+              <div className="flex justify-between items-center mt-6">
+                <Button
+                  onClick={() => setLogsPage(Math.max(1, logsPage - 1))}
+                  disabled={logsPage === 1}
+                  variant="outline"
+                  size="sm"
+                >
+                  ← Anterior
+                </Button>
+                
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Página {logsPage} de {Math.ceil(logsTotal / logsLimit)}
+                </span>
+                
+                <Button
+                  onClick={() => setLogsPage(logsPage + 1)}
+                  disabled={logsPage >= Math.ceil(logsTotal / logsLimit)}
+                  variant="outline"
+                  size="sm"
+                >
+                  Próxima →
+                </Button>
+              </div>
+            </>
+          )}
+
+
+        </div>
+      )}
     </div>
-  );
-}
+  );}

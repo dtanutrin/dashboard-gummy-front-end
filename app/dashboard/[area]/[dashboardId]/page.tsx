@@ -6,7 +6,7 @@ import Header from "../../../../components/Header";
 import Link from "next/link";
 import { PowerBIEmbed } from "../../../../lib/powerbi";
 import { decodeUrlParam } from "../../../../lib/utils";
-import { getDashboardById, Dashboard as ApiDashboard } from "../../../../lib/api";
+import { getDashboardById, trackDashboardAccess, Dashboard as ApiDashboard } from "../../../../lib/api";
 import Image from "next/image";
 
 // Objeto areaVisuals não é mais necessário para cores, mas pode ser mantido para ícones/descrições futuras.
@@ -50,6 +50,7 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
   const [dashboard, setDashboard] = useState<ApiDashboard | null>(null);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [accessTracked, setAccessTracked] = useState(false);
 
   useEffect(() => {
     if (!userLoading && !isAuthenticated) {
@@ -80,6 +81,18 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
         try {
           const fetchedDashboard = await getDashboardById(dashboardId);
           setDashboard(fetchedDashboard);
+          
+          // Rastrear acesso apenas uma vez quando o dashboard é carregado
+          if (!accessTracked) {
+            try {
+              await trackDashboardAccess(dashboardId);
+              setAccessTracked(true);
+              console.log('Acesso direto ao dashboard registrado');
+            } catch (trackError) {
+              console.error('Erro ao rastrear acesso direto:', trackError);
+              // Não impede o carregamento do dashboard
+            }
+          }
         } catch (err) {
           console.error("Erro ao buscar dashboard:", err);
           setError("Dashboard não encontrado ou erro ao carregar.");
@@ -90,7 +103,7 @@ export default function ViewDashboardPage({ params: paramsPromise }: { params: P
 
       fetchDashboardData();
     }
-  }, [user, userLoading, isAuthenticated, dashboardId, decodedAreaSlug, router, params]);
+  }, [user, userLoading, isAuthenticated, dashboardId, decodedAreaSlug, router, params, accessTracked]);
 
   if (userLoading || isLoadingDashboard) {
     return (

@@ -340,4 +340,126 @@ export const getUserDashboardAccess = async (userId: number): Promise<UserDashbo
   return response.data;
 };
 
+// Interface para logs
+export interface LogEntry {
+  id: number;
+  timestamp: string;
+  level: 'info' | 'warn' | 'error' | 'debug';
+  message: string;
+  userId?: number;
+  userEmail?: string;
+  userName?: string;  // Novo campo
+  user?: {            // Objeto completo do usuário
+    id: number;
+    name: string;
+    email: string;
+  };
+  action?: string;
+  resource?: string;
+  details?: any;
+  ip?: string;
+  userAgent?: string;
+}
+
+export interface LogsResponse {
+  logs: LogEntry[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface LogsFilters {
+  level?: string;
+  userId?: number;
+  action?: string;
+  resource?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Funções para gerenciamento de logs (Admin)
+export const getLogs = async (filters: LogsFilters = {}): Promise<LogsResponse> => {
+  try {
+    const params = new URLSearchParams();
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, value.toString());
+      }
+    });
+    
+    const response = await apiClient.get<LogsResponse>(`/logs?${params.toString()}`);
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || "Erro ao buscar logs";
+    console.error("Erro ao buscar logs:", error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const exportLogs = async (filters: LogsFilters = {}): Promise<Blob> => {
+  try {
+    const params = new URLSearchParams();
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, value.toString());
+      }
+    });
+    
+    const response = await apiClient.get(`/logs/export?${params.toString()}`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || "Erro ao exportar logs";
+    console.error("Erro ao exportar logs:", error);
+    throw new Error(errorMessage);
+  }
+};
+
+export const clearLogs = async (olderThanDays?: number): Promise<{deleted: number, message: string}> => {
+  try {
+    const params = olderThanDays ? `?olderThanDays=${olderThanDays}` : '';
+    const response = await apiClient.delete(`/logs${params}`);
+    return response.data.data; // Retorna os dados da resposta do backend
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || "Erro ao limpar logs";
+    console.error("Erro ao limpar logs:", error);
+    throw new Error(errorMessage);
+  }
+};
+
+// Interface para resposta do rastreamento de acesso
+export interface DashboardAccessResponse {
+  message: string;
+  dashboard: {
+    id: number;
+    name: string;
+    url: string;
+  };
+  user: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
+// Função para rastrear acesso ao dashboard
+export const trackDashboardAccess = async (dashboardId: number): Promise<DashboardAccessResponse> => {
+  try {
+    const response = await apiClient.post<DashboardAccessResponse>(`/dashboards/${dashboardId}/access`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || "Erro ao registrar acesso ao dashboard";
+      throw new Error(errorMessage);
+    }
+    throw new Error("Erro desconhecido ao registrar acesso");
+  }
+};
+
 export default apiClient;
