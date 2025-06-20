@@ -5,7 +5,7 @@ interface PowerBIEmbedProps {
   title: string;
   className?: string; // Para controlar w-full, h-full, min-height, etc. do contêiner
 }
-
+//função de tamanho do power como está implementada
 export function PowerBIEmbed({ reportId, title, className = "" }: PowerBIEmbedProps) {
   if (!reportId) {
     return (
